@@ -1,6 +1,6 @@
 from requests import get, post, put
 import json 
-from ..graphicElements.progressBar import *
+from graphicElements.progressBar import *
 
 # from math import *
 # from datetime import *
