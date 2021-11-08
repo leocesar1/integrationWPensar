@@ -2,7 +2,7 @@ from requests import get, post, put
 import json 
 from graphicElements.progressBar import *
 
-# from math import *
+from math import ceil
 # from datetime import *
 # from time import *
 
@@ -15,12 +15,34 @@ class wPensarAccessPoint(object):
 
     def __init__(self):
         # Global settings to access WPensar API
-        # Open a private file 'accessTokenWPensar.json' and get access token to API 
-        with open('accessTokenWPensar.json', 'r') as f:
-            accessToken = json.loads(f)['accessToken']
+        # Open a private file 'accessTokenWPensar.json' and get access token to API
+        
+        # Access the file with credentials
+        import os
+        print('Acessando credenciais da WPensar')
+        try:
+            fileTokenName = os.path.join(os.path.dirname(__file__),'accessTokenWPensar.json')
+            print('Chave carregada')
+        except:
+            print('Credenciais inválidas.')
+            fileTokenName = False
 
-        # Create a headers
-        self.headers = {'Authorization': 'access_token %s' % accessToken}
+        if fileTokenName: 
+            with open(fileTokenName, 'r', encoding= 'utf-8') as f:
+                accessToken = accessToken = json.loads(f.read())['accessToken']
+
+            # Create a headers
+            self.headers = {'Authorization': 'access_token %s' % accessToken}
+
+            # Testing token
+            try:
+                print('Testando acesso à plataforma WPensar')
+                self.getInformations(pk = 1)
+                print('Acesso permitido')
+            except:
+                print('Erro ao acessar a plataforma WPensar')
+        else:
+            print('Não foi possível carregar a credencial')
 
     def getInformations(self, pk='All', target='alunos'):
         # This function returns a list of data or a single data, depending on the pk parameter  
@@ -35,17 +57,17 @@ class wPensarAccessPoint(object):
                 'pagination': pagination,
                 'target': target}
             try:
-                nPag = ceil(loads(get(url, headers=self.headers).text)['count']/100)
+                nPag = ceil(json.loads(get(url, headers=self.headers).text)['count']/100)
                 print("Realizando aquisição dos dados na plataforma WPensar...")
                 printProgressBar(0, nPag, prefix='Progresso atual:',
                                 suffix='Completo', length=50)
                 for i in range(0, nPag):
                     page = i + 1
                     url = 'https://api.wpensar.com.br:443/%(target)s/?page=%(page)s&pagination=%(pagination)s' % {
-                        'page': data['page'],
-                        'pagination': data['pagination'],
+                        'page': page,
+                        'pagination': pagination,
                         'target': target}
-                    r = get(url, headers=headers).text
+                    r = get(url, headers=self.headers).text
                     for item in json.loads(r)['results']:
                         listData.append(item)
                     printProgressBar(i + 1, nPag, prefix='Progresso atual:',
