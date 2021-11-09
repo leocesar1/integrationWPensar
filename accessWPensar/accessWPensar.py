@@ -90,7 +90,7 @@ class wPensarAccessPoint(object):
                     'target': target}
                 r = json.loads(get(url, headers=self.headers).text)
                 print('Operação realizada com sucesso')
-                return r
+                return [r]
             except:
                 print('Ocorreu um erro ao realizar a operação. Por gentileza, repita a operação.')
                 return False

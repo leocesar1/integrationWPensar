@@ -2,7 +2,7 @@ import pandas as pd
 from designPartners.singleton import *
 from accessWPensar.accessWPensar import *
 
-class DataBase(metaclass = MetaSingleton):
+class DataBaseClickSign(metaclass = MetaSingleton):
     # get all data to include in WPensar
     def __init__(self, filename):
         if filename.split('.')[-1] == 'csv':
@@ -25,7 +25,7 @@ class DataBase(metaclass = MetaSingleton):
 
     def getResponsavelData(self, dataframe):
         data = []
-        dataframe = dataframe.iloc[:,6:21]
+        # dataframe = dataframe.iloc[:,6:21]
         print(len(dataframe))
         for i in range(len(dataframe)):
             data.append({
@@ -49,7 +49,7 @@ class DataBase(metaclass = MetaSingleton):
 
     def getResponsavelFinanceiroData(self, dataframe):
         data = []
-        dataframe = dataframe.iloc[:,22:37]
+        # dataframe = dataframe.iloc[:,22:37]
         for i in range(len(dataframe)):
             data.append({
                 'nome': dataframe.loc[i,'Formulário 1 Nome do Responsável Financeiro'],
@@ -72,7 +72,7 @@ class DataBase(metaclass = MetaSingleton):
 
     def getAlunoData(self, dataframe):
         data = []
-        dataframe = dataframe.iloc[:,38:55]
+        # dataframe = dataframe.iloc[:,38:55]
         for i in range(len(dataframe)):
             data.append({
                 'nome': dataframe.loc[i,'Formulário 1 Nome do Aluno (a)'],
