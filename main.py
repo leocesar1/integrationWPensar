@@ -11,4 +11,8 @@ from accessWPensar.dataFrame import *
 
 dataBaseWPensar = DataBaseWPensar()
 
-print(dataBaseWPensar.getAlunosAllInformations())
+dataBaseWPensar.getAlunosAllInformations()
+
+print(dataBaseWPensar.alunos)
+print(dataBaseWPensar.responsaveis)
+print(dataBaseWPensar.alunosResponsaveis)
