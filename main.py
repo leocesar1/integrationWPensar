@@ -11,8 +11,13 @@ from accessWPensar.dataFrame import *
 
 dataBaseWPensar = DataBaseWPensar()
 
-dataBaseWPensar.getAlunosAllInformations()
 
-print(dataBaseWPensar.alunos)
-print(dataBaseWPensar.responsaveis)
-print(dataBaseWPensar.alunosResponsaveis)
+
+# is a draft for a loop verification
+text2 = dataBaseWPensar.alunos['nome']
+
+for i in range(0,len(dataBaseClickSign.getAlunoData(dataBaseClickSign.dataframeRenovations))):
+    text1 = dataBaseClickSign.getAlunoData(dataBaseClickSign.dataframeRenovations).iloc[i,0]
+    for item in text2:
+        if dataBaseWPensar.stringComparation(text1, item):
+            print(item)

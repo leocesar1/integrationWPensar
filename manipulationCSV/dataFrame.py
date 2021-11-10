@@ -25,7 +25,6 @@ class DataBaseClickSign(metaclass = MetaSingleton):
 
     def getResponsavelData(self, dataframe):
         data = []
-        # dataframe = dataframe.iloc[:,6:21]
         print(len(dataframe))
         for i in range(len(dataframe)):
             data.append({
@@ -45,11 +44,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                 'cidade' : dataframe.loc[i,'Formulário 1 Cidade'],
                 'estado' : dataframe.loc[i,'Formulário 1 Estado'],
             })
-        return data
+        return pd.DataFrame.from_records(data)
 
     def getResponsavelFinanceiroData(self, dataframe):
         data = []
-        # dataframe = dataframe.iloc[:,22:37]
         for i in range(len(dataframe)):
             data.append({
                 'nome': dataframe.loc[i,'Formulário 1 Nome do Responsável Financeiro'],
@@ -68,15 +66,14 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                 'cidade' : dataframe.loc[i,'Formulário 1 Cidade.1'],
                 'estado' : dataframe.loc[i,'Formulário 1 Estado.1'],
             })
-        return data
+        return pd.DataFrame.from_records(data)
 
     def getAlunoData(self, dataframe):
         data = []
-        # dataframe = dataframe.iloc[:,38:55]
         for i in range(len(dataframe)):
             data.append({
                 'nome': dataframe.loc[i,'Formulário 1 Nome do Aluno (a)'],
                 'serie' : dataframe.loc[i,'Formulário 1 Série pretendida em 2022'],
-                'situacao' : dataframe.loc[i,'Formulário 1 Situação']
+                'situacao' : dataframe.loc[i,'Formulário 1 Situação:']
             })
-        return data
+        return pd.DataFrame.from_records(data)
