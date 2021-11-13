@@ -1,18 +1,13 @@
 from requests import get, post, put
 import json 
 from graphicElements.progressBar import *
+from designPartners.singleton import *
 
 from math import ceil
 # from datetime import *
 # from time import *
 
-class wPensarAccessPoint(object):
-    def __new__(cls):
-        # garanted a unique instance of a class
-        if not hasattr(cls, 'instance'):
-            cls.instance =super(wPensarAccessPoint, cls).__new__(cls)
-        return cls.instance
-
+class wPensarAccessPoint(metaclass = MetaSingleton):
     def __init__(self):
         # Global settings to access WPensar API
         # Open a private file 'accessTokenWPensar.json' and get access token to API
