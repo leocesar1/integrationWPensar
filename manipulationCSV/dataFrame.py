@@ -51,8 +51,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                 try:
                     self.dataframeTreated['situacao'] = dataframe['Formulário 1 Situação:']
                 except:
-                    self.dataframeTreated['situacao'] = dataframe['Formulário 1 Situação do Aluno:']
-
+                    try:
+                        self.dataframeTreated['situacao'] = dataframe['Formulário 1 Situação do Aluno:']
+                    except:
+                        self.dataframeTreated['situacao'] = dataframe['Formulário 1 Matrícula']
         return self.dataframeTreated
 
     def getResponsavelFinanceiroData(self, dataframe = None):
@@ -115,7 +117,7 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                                         pass
                                 finally:
                                     try:
-                                        self.dataframeTreated['resp_finc_tel_residencial'] = dataframe['Formulário 1 Telefone Residencial do Responsável Financeiro']
+                                        self.dataframeTreated['resp_finc_tel_residencial'] = dataframe['Formulário 1 Telefone Residencial do Responsável Financeiro ']
                                     except:
                                         try:
                                             self.dataframeTreated['resp_finc_tel_residencial'] = dataframe['Formulário 1 Telefone']
@@ -136,7 +138,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                                                 try:
                                                     self.dataframeTreated['resp_finc_email'] = dataframe['Formulário 1 E-mail - Responsável Financeiro']
                                                 except:
-                                                    pass
+                                                    try:
+                                                        self.dataframeTreated['resp_finc_email'] = dataframe['Formulário 1 E-mail do responsável financeiro']
+                                                    except:
+                                                        pass
                                             finally:
                                                 try:
                                                     self.dataframeTreated['resp_finc_cep'] = dataframe['Formulário 1 CEP do Responsável Financeiro']
@@ -248,7 +253,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                                         try:
                                             self.dataframeTreated['resp2_tel_residencial'] = dataframe['Formulário 1 Telefone - Segundo Associado']
                                         except:
-                                            pass
+                                            try:
+                                                self.dataframeTreated['resp2_tel_residencial'] = dataframe['Formulário 1 Telefone Residencial - Segundo Associado']
+                                            except:
+                                                pass
                                     finally:
                                         try:
                                             self.dataframeTreated['resp2_tel_celular'] = dataframe['Formulário 1 Telefone Celular do Segundo Associado']
@@ -256,7 +264,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                                             try:
                                                 self.dataframeTreated['resp2_tel_celular'] = dataframe['Formulário 1 Celular - Segundo Associado']
                                             except:
-                                                pass
+                                                try:
+                                                    self.dataframeTreated['resp2_tel_celular'] = dataframe['Formulário 1 Telefone Celular - Segundo Associado']
+                                                except:
+                                                    pass
                                         finally:
                                             try:
                                                 self.dataframeTreated['resp2_email'] = dataframe['Formulário 1 E-mail do Segundo Associado']
@@ -288,7 +299,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                                                             try:
                                                                 self.dataframeTreated['resp2_numero'] = dataframe['Formulário 1 Número - Segundo Associado']
                                                             except:
-                                                                pass
+                                                                try:
+                                                                    self.dataframeTreated['resp2_numero'] = dataframe['Formulário 1 Número -  Segundo Associado']
+                                                                except:
+                                                                    pass
                                                         finally:
                                                             try:
                                                                 self.dataframeTreated['resp2_bairro'] = dataframe['Formulário 1 Bairro do Segundo Associado']
@@ -470,13 +484,22 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                                                                             finally:
                                                                                 pass
 
-    def isRenovation(self):
-        pass
-        # def getRenovationsDataFrame(self):
-        #     # filter by renovations case
-        #     return self.dataframe.loc[(self.dataframe['Formulário 1 Matrícula '] == 'Renovação') & (self.dataframe['Status do documento'] == 'Finalizado')]
+    def getRenovation(self, dataframe = None):
+        # filter by renovations case
+        dataframe = self.dataframeTreated if dataframe is None else dataframe
+        
+        return self.dataframe.loc[(self.dataframe['situacao'] == 'Aluno novo') & (self.dataframe['Status do documento'] == 'Finalizado')]
 
-        # def getNewRegistrationsDataFrame(self):
-        #     # filter by new registrations case
-        #     return self.dataframe.loc[(self.dataframe['Formulário 1 Matrícula '] == 'Renovação') & (self.dataframe['Status do documento'] == 'Finalizado')]
-    
+    def isNewResponsavel(self, dataframe = None):
+        # filter by renovations case
+        dataframe = self.dataframeTreated if dataframe is None else dataframe
+        
+        return self.dataframe.loc[(self.dataframe['situacao'] == 'Renovação') & (self.dataframe['Status do documento'] == 'Finalizado')]
+
+    def saveAsXls(self, dataframe = None):
+        dataframe = self.dataframeTreated if dataframe is None else dataframe
+        
+        import os
+        import xlwt     
+        filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', 'exportTestFile.xls')
+        dataframe.to_excel(filename)

@@ -5,13 +5,14 @@
 from manipulationCSV.dataFrame import *
 
 # dataBaseClickSign = DataBaseClickSign('Relatório - matrículas internas.csv')
-dataBaseClickSign = DataBaseClickSign('Relatório -matrículas internas excepcionais.csv')
+# dataBaseClickSign = DataBaseClickSign('Relatório -matrículas internas excepcionais.csv')
 # dataBaseClickSign = DataBaseClickSign('Relatório - matrículas externas.csv')
-# dataBaseClickSign = DataBaseClickSign('Relatório - matrículas externas - excepcionais.csv')
-a = dataBaseClickSign.dataframeOriginal
-d = dataBaseClickSign.dataframeTreated
-# print(a.columns.values.tolist())
-print(d)
+dataBaseClickSign = DataBaseClickSign('Relatório - matrículas externas - excepcionais.csv')
+# a = dataBaseClickSign.dataframeOriginal
+# d = dataBaseClickSign.dataframeTreated
+# print(d.columns.values.tolist())
+# print(d['situacao'])
+dataBaseClickSign.saveAsXls()
 # Load WPensar json
 # from accessWPensar.dataFrame import *
 
