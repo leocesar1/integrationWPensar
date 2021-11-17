@@ -27,12 +27,90 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         self.getResponsavelOneData()
         self.getResponsavelTwoData()
         self.getResponsavelFinanceiroData()
+        self.setInclusionsSituations()
+        # self.applyFilters()
+        self.getReport()
     
+    # def applyFilters(self):
+    #     self.dataframeTreated[]
+
+    def isNewStudent(self, studentSituation):
+        listOfPossibilitiesNewStudents = (
+            'Aluno Novo (dependente de associado ativo)',
+            'Novo aluno (ingresso externo) ',
+            'Novo aluno (dependente de ex - aluno da escola)',
+            ' Novo aluno (dependente de associado inativo)'
+        )
+
+        listOfPossibilitiesOldStudents = (
+            'Ex - aluno (dependente de associado inativo)',
+            'Aluno da Escola'
+        )
+
+        if studentSituation in listOfPossibilitiesNewStudents:
+            return True
+        elif studentSituation in listOfPossibilitiesOldStudents:
+            return False
+        else:
+            return None
+
+    def isNewResponsable(self, responsableSituation):
+        # filter by renovations case
+        
+
+        listOfPossibilitiesOldResponsibles = (
+            'Ex - aluno (dependente de associado inativo)',
+            'Aluno da Escola',
+            'Aluno Novo (dependente de associado ativo)',
+            'Novo aluno (dependente de ex - aluno da escola)',
+            ' Novo aluno (dependente de associado inativo)'
+        )
+        listOfPossibilitiesNewResponsibles = (
+            'Novo aluno (ingresso externo) ',
+        )
+
+        if responsableSituation in listOfPossibilitiesNewResponsibles:
+            return True
+        elif responsableSituation in listOfPossibilitiesOldResponsibles:
+            return False
+        else:
+            return None
+        
+    def isEmpty(self, text):
+        # verify if a field is a empty field
+        return True if not text else False
+
+    def isTestStudent(self, text):
+        # verify if is a teste
+        # students name
+        # return True if isn't a test
+        listTestNames = [
+            'Jéssica Nascimento Lacerda Domingos',
+            'Teste ',
+            'Testando ',
+            'aaaaaaaaaaaaaaa',
+            'Minga',
+            'Ele',
+            'minga ',
+            'Caetano Domingos Lacerda',
+            'Gabi',
+            'Caetano Domingos',
+            'Amanda',
+            'Gabriella Veloni'
+        ]
+        return True if text in listTestNames else False
+
+    def setInclusionsSituations(self):
+        # includes all        
+        self.dataframeTreated['novo_aluno'] = self.dataframeTreated.apply(lambda x: self.isNewStudent(x['situacao']), axis = 1)
+        self.dataframeTreated['novo_responsavel'] = self.dataframeTreated.apply(lambda x: self.isNewResponsable(x['situacao']), axis = 1)
+        self.dataframeTreated['teste'] = self.dataframeTreated.apply(lambda x: self.isTestStudent(x['nomeAluno']), axis = 1)
+
     def getDocumentsInformations(self, dataframe = None):
         dataframe = self.dataframeOriginal if dataframe is None else dataframe
         
         self.dataframeTreated = dataframe[['Status do documento']].copy()
-        
+        self.dataframeTreated = self.dataframeTreated.rename(columns= {'Status do documento': 'status'})
         # return self.dataframeTreated
 
     def getAlunoData(self, dataframe = None):
@@ -490,12 +568,6 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         
         return self.dataframe.loc[(self.dataframe['situacao'] == 'Aluno novo') & (self.dataframe['Status do documento'] == 'Finalizado')]
 
-    def isNewResponsavel(self, dataframe = None):
-        # filter by renovations case
-        dataframe = self.dataframeTreated if dataframe is None else dataframe
-        
-        return self.dataframe.loc[(self.dataframe['situacao'] == 'Renovação') & (self.dataframe['Status do documento'] == 'Finalizado')]
-
     def saveAsXls(self, dataframe = None):
         dataframe = self.dataframeTreated if dataframe is None else dataframe
         
@@ -503,3 +575,43 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         import xlwt     
         filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', 'exportTestFile.xls')
         dataframe.to_excel(filename)
+
+    def getReport(self):
+        # All data
+        totalData = len(self.dataframeTreated)
+        columnNames = self.dataframeTreated.columns
+        finishedData = self.dataframeTreated.query('status == "Finalizado"')
+        print('Avaliação das inclusões...')
+        print('--------------------------------------------------------')
+        print('Foram importados %(dados)s dados.' % {'dados': totalData})
+        
+        print('Documentos finalizados: %s ', len(finishedData) )
+        print('E serão incluídos os seguintes dados:')
+        [print(i) for i in columnNames]
+        
+        # New students
+        print('--------------------------------------------------------')
+        newData = self.dataframeTreated.query('status == "Finalizado" & (novo_aluno == True) ')
+        print('Novos alunos: %s dados', len(newData) )
+        
+        # New Responsables
+        print('--------------------------------------------------------')
+        newData = self.dataframeTreated.query('status == "Finalizado" & (novo_responsavel == True) ')
+        print('Novos responsáveis: %s dados', len(newData) )
+
+        # Old students
+        print('--------------------------------------------------------')
+        newData = self.dataframeTreated.query('status == "Finalizado" & (novo_aluno == False) ')
+        print('Alunos para renovação ou retorno de ex-alunos: %s dados', len(newData) )
+        
+        # Old Responsibles
+        print('--------------------------------------------------------')
+        newData = self.dataframeTreated.query('status == "Finalizado" & (novo_responsavel == False) ')
+        print('Responsáveis já incluídos no sistema: %s dados', len(newData) )
+
+
+        # Test data
+        print('--------------------------------------------------------')
+        newData = self.dataframeTreated.query('status == "Finalizado" & (teste == True) ')
+        print('Dados com alunos teste e finalizados: %s dados', len(newData) )
+        
