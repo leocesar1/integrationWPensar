@@ -7,6 +7,22 @@ from math import ceil
 # from datetime import *
 # from time import *
 
+class dataAluno(object):
+    """
+    This class creates a partner to include students data
+    """
+    def __init__(self, data):
+        self.matricula = data['matriculaWPensar'] if data['matriculaWPensar'] != 0 else False 
+        self.nome = data['nomeAluno']
+
+    def toJson(self):
+        response = {
+            'nome': self.nome
+            }
+        if self.matricula is not False:
+            response['matricula'] = self.matricula
+        return response
+
 class wPensarAccessPoint(metaclass = MetaSingleton):
     def __init__(self):
         # Global settings to access WPensar API
@@ -63,7 +79,7 @@ class wPensarAccessPoint(metaclass = MetaSingleton):
                         'pagination': pagination,
                         'target': target}
                     r = get(url, headers=self.headers).text
-                    for item in json.loads(r)['results']:
+                    for item in json.loads(r, encoding='utf-8')['results']:
                         listData.append(item)
                     printProgressBar(i + 1, nPag, prefix='Progresso atual:',
                                     suffix='Completo', length=50)
@@ -83,7 +99,7 @@ class wPensarAccessPoint(metaclass = MetaSingleton):
                 url = 'https://api.wpensar.com.br/%(target)s/%(pk)s/' % {
                     'pk': pk,
                     'target': target}
-                r = json.loads(get(url, headers=self.headers).text)
+                r = json.loads(get(url, headers=self.headers).text, encoding='utf-8')
                 print('Operação realizada com sucesso')
                 return [r]
             except:
@@ -91,6 +107,16 @@ class wPensarAccessPoint(metaclass = MetaSingleton):
                 return False
 
         else:
+            return False
+
+    def updateData(self, pk = 'New', target = 'alunos', dataJson = None):
+        url = f'https://api.wpensar.com.br/{target}/' if type(pk) == str else f'https://api.wpensar.com.br/{target}/{pk}/' 
+        
+        try:        
+            r = post(url, headers=self.headers, data = dataJson).json()
+            return r
+        except:
+            print("Não foi possível inserir os dados na plataforma WPensar.")
             return False
 
 # I need include this piece of code

@@ -12,8 +12,14 @@ class DataBaseWPensar(metaclass = MetaSingleton):
         self.getAllInformations()
         
     def getInformations(self, target="alunos"):
+        import os
+        filename = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '01_tests', 'backup', 'alunos','backup_20211029_19:59:52.json')
         try:
-            data = self.accessPoint.getInformations(pk='All', target=target)
+            # data = self.accessPoint.getInformations(pk='All', target=target)
+            # descomentar as linhas acima para voltar a buscar na WPensar
+            
+            with open(filename) as json_data:
+                data = json.load(json_data)
             dataframe = pd.DataFrame.from_records(data)
             return dataframe
         except:
@@ -35,17 +41,7 @@ class DataBaseWPensar(metaclass = MetaSingleton):
 
     def getAllInformations(self):
         self.alunos = self.getLoop(self.getInformations('alunos'), 'Buscando informações de alunos na WPensar...')
-        self.responsaveis = self.getLoop(self.getInformations('responsaveis'), 'Buscando informações de responsáveis na WPensar...')
-        self.alunosResponsaveis = self.getLoop(self.getInformations('alunos-responsaveis'), 'Buscando relação entre alunos e responsáveis na WPensar...')
+        # self.responsaveis = self.getLoop(self.getInformations('responsaveis'), 'Buscando informações de responsáveis na WPensar...')
+        # self.alunosResponsaveis = self.getLoop(self.getInformations('alunos-responsaveis'), 'Buscando relação entre alunos e responsáveis na WPensar...')
 
-    def calculateSimilarity(self, text1, text2):
-        import jellyfish as jf
-        
-        return jf.levenshtein_distance(''.join(text1.split()), ''.join(text2.split()))
-
-    def stringComparation(self, text1, text2):
-        if self.calculateSimilarity(text1.upper(), text2.upper()) == 0:
-            if ''.join(text1.upper().split()) == ''.join(text2.upper().split()):
-                return True   # The strings are the same
-            else:
-                return False  # The strings aren't the same
+    

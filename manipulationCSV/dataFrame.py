@@ -30,48 +30,47 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         self.setInclusionsSituations()
         # self.applyFilters()
         self.getReport()
-    
-    # def applyFilters(self):
-    #     self.dataframeTreated[]
 
     def isNewStudent(self, studentSituation):
         listOfPossibilitiesNewStudents = (
             'Aluno Novo (dependente de associado ativo)',
             'Novo aluno (ingresso externo) ',
             'Novo aluno (dependente de ex - aluno da escola)',
-            ' Novo aluno (dependente de associado inativo)'
+            ' Novo aluno (dependente de associado inativo)',
+            'Ex - aluno (dependente de associado inativo)'
         )
 
-        listOfPossibilitiesOldStudents = (
-            'Ex - aluno (dependente de associado inativo)',
-            'Aluno da Escola'
-        )
+        listOfPossibilitiesOldStudents = ('Aluno da Escola')
 
-        if studentSituation in listOfPossibilitiesNewStudents:
-            return True
-        elif studentSituation in listOfPossibilitiesOldStudents:
-            return False
-        else:
+        try:
+            if studentSituation in listOfPossibilitiesNewStudents:
+                return True
+            elif studentSituation in listOfPossibilitiesOldStudents:
+                return False
+            else:
+                return None
+        except:
             return None
 
-    def isNewResponsable(self, responsableSituation):
+    def isNewResponsible(self, responsibleSituation):
         # filter by renovations case
         
 
-        listOfPossibilitiesOldResponsibles = (
-            'Ex - aluno (dependente de associado inativo)',
-            'Aluno da Escola',
-            'Aluno Novo (dependente de associado ativo)',
-            'Novo aluno (dependente de ex - aluno da escola)',
-            ' Novo aluno (dependente de associado inativo)'
-        )
-        listOfPossibilitiesNewResponsibles = (
-            'Novo aluno (ingresso externo) ',
+        listOfPossibilitiesOldResponsibles = (   
         )
 
-        if responsableSituation in listOfPossibilitiesNewResponsibles:
+        listOfPossibilitiesNewResponsibles = (
+            'Novo aluno (ingresso externo) ',
+            'Ex - aluno (dependente de associado inativo)',
+            'Novo aluno (dependente de ex - aluno da escola)',
+            'Aluno da Escola',
+            'Aluno Novo (dependente de associado ativo)',
+            ' Novo aluno (dependente de associado inativo)'
+        )
+
+        if responsibleSituation in listOfPossibilitiesNewResponsibles:
             return True
-        elif responsableSituation in listOfPossibilitiesOldResponsibles:
+        elif responsibleSituation in listOfPossibilitiesOldResponsibles:
             return False
         else:
             return None
@@ -79,6 +78,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
     def isEmpty(self, text):
         # verify if a field is a empty field
         return True if not text else False
+
+    def isFinished(self, text):
+        # verify if a field is a empty field
+        return True if "Finalizado" else False
 
     def isTestStudent(self, text):
         # verify if is a teste
@@ -96,15 +99,17 @@ class DataBaseClickSign(metaclass = MetaSingleton):
             'Gabi',
             'Caetano Domingos',
             'Amanda',
-            'Gabriella Veloni'
+            'Gabriella Veloni',
+            'Kyra Leles Amantea'
         ]
         return True if text in listTestNames else False
 
     def setInclusionsSituations(self):
         # includes all        
         self.dataframeTreated['novo_aluno'] = self.dataframeTreated.apply(lambda x: self.isNewStudent(x['situacao']), axis = 1)
-        self.dataframeTreated['novo_responsavel'] = self.dataframeTreated.apply(lambda x: self.isNewResponsable(x['situacao']), axis = 1)
+        self.dataframeTreated['novo_responsavel'] = self.dataframeTreated.apply(lambda x: self.isNewResponsible(x['situacao']), axis = 1)
         self.dataframeTreated['teste'] = self.dataframeTreated.apply(lambda x: self.isTestStudent(x['nomeAluno']), axis = 1)
+        self.dataframeTreated['finalizado'] = self.dataframeTreated.apply(lambda x: self.isFinished(x['status']), axis = 1)
 
     def getDocumentsInformations(self, dataframe = None):
         dataframe = self.dataframeOriginal if dataframe is None else dataframe
@@ -585,9 +590,9 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         print('--------------------------------------------------------')
         print('Foram importados %(dados)s dados.' % {'dados': totalData})
         
-        print('Documentos finalizados: %s ', len(finishedData) )
-        print('E serão incluídos os seguintes dados:')
-        [print(i) for i in columnNames]
+        print('Documentos finalizados: %s ' % len(finishedData) )
+        # print('E serão incluídos os seguintes dados:')
+        # [print(i) for i in columnNames]
         
         # New students
         print('--------------------------------------------------------')
