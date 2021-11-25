@@ -108,7 +108,8 @@ class InclusionManager(object):
                 retornaremos seu id
                 """
                 
-                # PRECISO INCLUIR O SEND DATA
+                print(self.sendDataToWPensar(target=target, data = data))
+                
                 return "Novo dado já existe na WPensar - Dados atualizados."
             elif (isNewData and isExistWPensar == 0): #True and False
                 '''
@@ -147,7 +148,7 @@ class InclusionManager(object):
         elif target == 'responsaveis':
             dataTreated = dataResponsavel(data.to_dict())
             if data['codigoResponsavel'] != 0:
-                pk = data['matriculaWPensar']
+                pk = data['codigoResponsavel']
         else:
             pass
         print(pk)

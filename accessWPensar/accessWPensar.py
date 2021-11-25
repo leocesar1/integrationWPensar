@@ -4,7 +4,7 @@ from graphicElements.progressBar import *
 from designPartners.singleton import *
 
 from math import ceil
-from datetime import *
+import datetime
 # from time import *
 
 class dataResponsavel(object):
@@ -18,7 +18,7 @@ class dataResponsavel(object):
         self.cpf = data['cpfResponsavel'] if data['cpfResponsavel'] != "" else ""
         self.celular = data['celularResponsavel'] if data['celularResponsavel'] != "" else ""
         # self.sexo = data['sexoResponsavel if = data['se != "" else ""']
-        # self.datanascimento = datetime.strptime(data['dataNascimentoResponsavel'], "%d-%m-%y").strftime("%Y-%M-%D") if data['dataNascimentoResponsavel'] != "" else ""
+        self.datanascimento = datetime.datetime.strptime(data['dataNascimentoResponsavel'], "%d-%m-%Y").strftime("%Y-%m-%d") if data['dataNascimentoResponsavel'] != "" else ""
         # self.estadocivil = data['estadoCivilResponsavel if = data['es != "" else ""']
         self.nacionalidade = data['nacionalidadeResponsavel'] if data['nacionalidadeResponsavel'] != "" else ""
         self.profissao = data['profissaoResponsavel'] if data['profissaoResponsavel'] != "" else ""
@@ -40,7 +40,7 @@ class dataResponsavel(object):
         response['cpf'] = self.cpf
         response['celular'] = self.celular
         # response['sexo'] = self.sexo
-        # response['datanascimento'] = self.datanascimento
+        response['datanascimento'] = self.datanascimento
         # response['estadocivil'] = self.estadocivil
         response['nacionalidade'] = self.nacionalidade
         response['profissao'] = self.profissao
@@ -163,8 +163,12 @@ class wPensarAccessPoint(metaclass = MetaSingleton):
     def updateData(self, pk = 'New', target = 'alunos', dataJson = None):
         url = f'https://api.wpensar.com.br/{target}/' if type(pk) == str else f'https://api.wpensar.com.br/{target}/{pk}/' 
         
-        try:        
-            r = post(url, headers=self.headers, data = dataJson).json()
+        try:
+            if type(pk) == str:        
+                r = post(url, headers=self.headers, data = dataJson).json()
+            else:
+                r = put(url, headers=self.headers, data = dataJson).json()
+
             return r
         except:
             print("Não foi possível inserir os dados na plataforma WPensar.")
