@@ -4,8 +4,59 @@ from graphicElements.progressBar import *
 from designPartners.singleton import *
 
 from math import ceil
-# from datetime import *
+from datetime import *
 # from time import *
+
+class dataResponsavel(object):
+    """
+    This class creates a partner to include responsible data
+    """
+    def __init__(self, data):
+        self.codigo = data['codigoResponsavel'] if data['codigoResponsavel'] != 0 else "" 
+        self.nome = data['nomeResponsavel'] if data['nomeResponsavel'] != "" else ""
+        self.email = data['emailResponsavel'] if data['emailResponsavel'] != "" else ""
+        self.cpf = data['cpfResponsavel'] if data['cpfResponsavel'] != "" else ""
+        self.celular = data['celularResponsavel'] if data['celularResponsavel'] != "" else ""
+        # self.sexo = data['sexoResponsavel if = data['se != "" else ""']
+        # self.datanascimento = datetime.strptime(data['dataNascimentoResponsavel'], "%d-%m-%y").strftime("%Y-%M-%D") if data['dataNascimentoResponsavel'] != "" else ""
+        # self.estadocivil = data['estadoCivilResponsavel if = data['es != "" else ""']
+        self.nacionalidade = data['nacionalidadeResponsavel'] if data['nacionalidadeResponsavel'] != "" else ""
+        self.profissao = data['profissaoResponsavel'] if data['profissaoResponsavel'] != "" else ""
+        self.identidade = data['identidadeResponsavel'] if data['identidadeResponsavel'] != "" else ""
+        self.telefone = data['telefoneResponsavel'] if data['telefoneResponsavel'] != "" else ""
+        self.cep = data['cepResponsavel'] if data['cepResponsavel'] != "" else ""
+        self.logradouro = data['logradouroResponsavel'] if data['logradouroResponsavel'] != "" else ""
+        self.numlogradouro = data['numlogradouroResponsavel'] if data['numlogradouroResponsavel'] != "" else ""
+        self.complemento = data['complementoResponsavel'] if data['complementoResponsavel'] != "" else ""
+        
+    def toJson(self):
+        response = {
+            'nome': self.nome
+            }
+        if self.codigo is not False:
+            response['codigo'] = self.codigo 
+        
+        response['email'] = self.email
+        response['cpf'] = self.cpf
+        response['celular'] = self.celular
+        # response['sexo'] = self.sexo
+        # response['datanascimento'] = self.datanascimento
+        # response['estadocivil'] = self.estadocivil
+        response['nacionalidade'] = self.nacionalidade
+        response['profissao'] = self.profissao
+        response['identidade'] = self.identidade
+        response['telefone'] = self.telefone
+        response['cep'] = self.cep
+        response['logradouro'] = self.logradouro
+        response['numlogradouro'] = self.numlogradouro
+        response['complemento'] = self.complemento
+        # response['escolaridadeformacao'] = self.escolaridadeformacao
+
+        response = {k: v for k, v in response.items() if v != '' and v != None}
+        
+        return response
+
+        
 
 class dataAluno(object):
     """
@@ -118,19 +169,3 @@ class wPensarAccessPoint(metaclass = MetaSingleton):
         except:
             print("Não foi possível inserir os dados na plataforma WPensar.")
             return False
-
-# I need include this piece of code
-# repeatLoop = True
-
-# while repeatLoop:
-#     option = input(
-#         'Deseja realizar o backup das informações "%(target)s"? (S/N)' % {'target': target})
-#     if option.upper() == 'S':
-#         repeatLoop = not saveBackup(target, 'backup', listData)
-#     elif option.upper() == 'N':
-#         repeatLoop = False
-#     else:
-#         print('Opção inválida!!!')
-
-# print('Serviço finalizado!!!')
-# return True
