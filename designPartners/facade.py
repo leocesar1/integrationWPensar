@@ -172,31 +172,30 @@ class InclusionManager(object):
         Incluir responsáveis
         O número de responsáveis depende da planilha
         """
-        print("Iniciando inclusão de responsáveis")
-        if 'resp2_nome' in self.ClickSign.columns and 'resp_finc_nome' in self.ClickSign.columns:
-            num_responsibles = 3
-        elif 'resp1_nome' in self.ClickSign.columns and 'resp_finc_nome' in self.ClickSign.columns:
-            num_responsibles = 2
-        else:
-            num_responsibles = 0
-        print(f'Serão incluídos até {num_responsibles} responsáveis')
-
-        print("Buscando os códigos dos responsáveis na WPensar...\n")
         # Responsável Financeiro
+        print("Buscando os códigos dos responsáveis no campo RESPONSÁVEL FINANCEIRO na WPensar...\n")
         self.ClickSign['resp_finc_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x['resp_finc_nome'], target='responsaveis') if (x['resp_finc_nome'] != '') else 0, axis = 1)
         self.getDataResponsibleForInclusion(data = self.ClickSign, radical='resp_finc')
-        
         self.ClickSign['resp_finc_procedimento'] = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'responsaveis'), axis = 1)
         
-        # if num_responsibles == 3:
-        #     self.ClickSign['codResponsavelWPensar_1'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x['nomeAluno']), axis = 1)
-        # print("Confirmando qual o procedimento a ser adotado...\n")
-        # self.ClickSign['procedimentoResponsável_1'] = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x), axis = 1, target= 'responsaveis')
+        print("Iniciando inclusão de responsáveis")
+        # Responsável 1
+        print("Buscando os códigos dos responsáveis no campo PRIMEIRO ASSOCIADO na WPensar...\n")
+        self.ClickSign['resp1_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x['resp1_nome'], target='responsaveis') if (x['resp1_nome'] != '') else 0, axis = 1)
+        self.getDataResponsibleForInclusion(data = self.ClickSign, radical='resp1')
+        self.ClickSign['resp1_procedimento'] = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'responsaveis'), axis = 1)
+        
+        # Responsável 2
+        if 'resp2_nome' in self.ClickSign.columns:
+            print("Buscando os códigos dos responsáveis no campo SEGUNDO ASSOCIADO na WPensar...\n")
+            self.ClickSign['resp2_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x['resp2_nome'], target='responsaveis') if (x['resp2_nome'] != '') else 0, axis = 1)
+            self.getDataResponsibleForInclusion(data = self.ClickSign, radical='resp2')
+            self.ClickSign['resp2_procedimento'] = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'responsaveis'), axis = 1)
 
-
+        
         import os
         import openpyxl     
-        filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', 'testSaveFiles.xls')
+        filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', 'ResultIntegrations.xls')
         self.ClickSign.to_excel(filename, engine= 'openpyxl')
               
 
