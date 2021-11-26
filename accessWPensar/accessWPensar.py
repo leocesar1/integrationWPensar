@@ -7,6 +7,24 @@ from math import ceil
 import datetime
 # from time import *
 
+class dataAlunoResponsavel(object):
+    """
+    This class creates a partner to include students data
+    """
+    def __init__(self, data):
+        self.pk = data['codigoAlunoResponsavel'] if data['codigoAlunoResponsavel'] != 0 else False 
+        self.mataluno = data['matriculaWPensar']
+        self.codresponsavel =data['codigoResponsavel']
+
+    def toJson(self):
+        response = {
+            'mataluno': self.mataluno,
+            'codresponsavel': self.codresponsavel
+            }
+        if self.pk is not False:
+            response['pk'] = self.pk
+        return response
+
 class dataResponsavel(object):
     """
     This class creates a partner to include responsible data

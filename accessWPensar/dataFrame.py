@@ -15,12 +15,12 @@ class DataBaseWPensar(metaclass = MetaSingleton):
         import os
         filename = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '01_tests', 'backup', f'{target}','backup.json')
         try:
-            data = self.accessPoint.getInformations(pk='All', target=target)
+            # data = self.accessPoint.getInformations(pk='All', target=target)
             # descomentar as linhas acima para voltar a buscar na WPensar
             
             # descomentar as linhas abaixo para voltar a buscar no backup da WPensar
-            # with open(filename) as json_data:
-            #     data = json.load(json_data)
+            with open(filename) as json_data:
+                data = json.load(json_data)
 
 
             dataframe = pd.DataFrame.from_records(data)
@@ -44,8 +44,8 @@ class DataBaseWPensar(metaclass = MetaSingleton):
         return data
 
     def getAllInformations(self):
-        # self.alunos = self.getLoop(self.getInformations('alunos'), 'Buscando informações de alunos na WPensar...')
+        self.alunos = self.getLoop(self.getInformations('alunos'), 'Buscando informações de alunos na WPensar...')
         self.responsaveis = self.getLoop(self.getInformations('responsaveis'), 'Buscando informações de responsáveis na WPensar...')
-        # self.alunosResponsaveis = self.getLoop(self.getInformations('alunos-responsaveis'), 'Buscando relação entre alunos e responsáveis na WPensar...')
+        self.alunosResponsaveis = self.getLoop(self.getInformations('alunos-responsaveis'), 'Buscando relação entre alunos e responsáveis na WPensar...')
 
     
