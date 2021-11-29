@@ -7,6 +7,76 @@ from math import ceil
 import datetime
 # from time import *
 
+class dataMatricula(object):
+    """
+    This class creates a partner to include students data
+    """
+    def __init__(self, data):
+        self.mataluno = data['matriculaWPensar']
+        self.codTurma = self.getTurma(data['serie2022'])
+
+    def getTurma(self, turma):
+        turma = turma.replace('Berçário II - Integral', "Berçário II (Integral)")
+        turma = turma.replace('Berçário II - Parcial', "Berçário II (Parcial)")
+        turma = turma.replace('Maternal I - Integral', "Maternal I (Integral)")
+        turma = turma.replace('Maternal I - Tarde', "Maternal I (Parcial)")
+        turma = turma.replace('Maternal I - Manhã', "Maternal I (Parcial)")
+        turma = turma.replace('Maternal II - Integral', "Maternal I (Integral)")
+        turma = turma.replace('Maternal II - Manhã', "Maternal II (Parcial)")
+        turma = turma.replace('Maternal II - Tarde', "Maternal II (Parcial)")
+
+        turma = turma.replace('Pré- Escola I - Manhã', "Pré I (Parcial)")
+        turma = turma.replace('Pré- Escola I - Tarde', "Pré I (Parcial)")
+        turma = turma.replace('Pré- Escola I - Integral', "Pré I (Integral)")
+        turma = turma.replace('Pré- Escola II - Manhã', "Pré II (Parcial)")
+        turma = turma.replace('Pré- Escola II - Tarde', "Pré II (Parcial)")
+        turma = turma.replace('Pré- Escola II - Integral', "Pré II (Integral)")
+
+        turma = turma.replace('º', "")
+        turma = turma.replace('EF I - Manhã', "EFI")
+        turma = turma.replace('EF I - Tarde', "EFI")
+        turma = turma.replace('EF II - Manhã', "EFII")
+        turma = turma.replace('EF II - Tarde', "EFII")
+        
+        turma = turma.replace('Ensino Médio - Manhã', 'EM')
+        turma = turma.replace('Ensino Médio - Tarde', 'EM')
+
+        listTurmas = {
+            "Berçário II (Parcial)": 756,
+            "Berçário II (Integral)": 756,
+            "Maternal I (Parcial)": 733,
+            "Maternal I (Integral)": 733,
+            "Maternal II (Parcial)": 738,
+            "Maternal II (Integral)": 738,
+            "Pré I (Parcial)": 740,
+            "Pré I (Integral)": 740,
+            "Pré II (Parcial)": 739,
+            "Pré II (Integral)": 739,
+            "1 ano - EFI": 741,
+            "2 ano - EFI": 742,
+            "3 ano - EFI": 743,
+            "4 ano - EFI": 744,
+            "5 ano - EFI": 745,
+            "6 ano - EFII": 746,
+            "7 ano - EFII": 747,
+            "8 ano - EFII": 748,
+            "9 ano - EFII": 757,
+            "1 ano - EM": 749,
+            "2 ano - EM": 750,
+            "3 ano - EM": 751
+        }
+
+        return listTurmas[turma]
+
+
+    def toJson(self):
+        response = {
+            'mataluno': self.mataluno,
+            'codturma': self.codTurma,
+            }
+
+        return response
+
 class dataAlunoResponsavel(object):
     """
     This class creates a partner to include students data
