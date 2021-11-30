@@ -27,17 +27,29 @@ class InclusionManager(object):
         self.getTableCSV()
         self.getTableWPensar()
 
-    def getTableCSV(self):
-        self.dataBaseClickSign = DataBaseClickSign('Relatório - matrículas internas - TESTE.csv')
-        # self.dataBaseClickSign = DataBaseClickSign('Relatório - matrículas internas.csv')
+    def choiceFile(self):
+        import os
+        folder = os.path.join(os.path.dirname('__file__'), 'planilha_clicksign')
+        files = [os.path.join(nome) for nome in os.listdir(folder)]
+        print(f"""Escolha o número correspondente ao arquivo que deseja importar:\n""")
+        for i in range(0, len(files)):
+            print(f"[{i+1}] - {files[i]}\n")
+        choice = input(":")
+        return files[int(choice)-1]
         
-        # self.dataBaseClickSign = DataBaseClickSign('Relatório -matrículas internas excepcionais.csv')
-        # self.dataBaseClickSign = DataBaseClickSign('Relatório - matrículas externas.csv')
-        # self.dataBaseClickSign = DataBaseClickSign('Relatório - matrículas externas - excepcionais.csv')
+        
+         
+
+    def getTableCSV(self):
+        # import os
+        nameFile = self.choiceFile()
+        filename = nameFile#os.path.join(os.path.dirname('__file__'), 'planilha_clicksign', filename)
+        self.dataBaseClickSign = DataBaseClickSign(filename)
         self.ClickSign = self.dataBaseClickSign.dataframeTreated
 
     def getTableWPensar(self):
         self.WPensar = DataBaseWPensar()
+        # self.saveBackupJson()
 
     def calculateSimilarity(self, text1, text2):
         import jellyfish as jf
@@ -50,7 +62,6 @@ class InclusionManager(object):
 
             if similarity == 0:
                 if unidecode(''.join(text1.upper().split())) == unidecode(''.join(text2.upper().split())):
-                    # print(similarity)
                     return True   # The strings are the same
                 else:
                     return False  # The strings aren't the same
@@ -80,32 +91,22 @@ class InclusionManager(object):
                 return 0
         elif target == 'alunos-responsaveis':
             codAluno = data['matriculaWPensar']
-            codResponsavel = data[f'codigoResponsavel']
-            # print(codResponsavel)
-            
+            codResponsavel = data[f'codigoResponsavel']            
             try:
                 codRelacao = self.WPensar.alunosResponsaveis['id'][(self.WPensar.alunosResponsaveis['mataluno'] == codAluno) & (self.WPensar.alunosResponsaveis['codresponsavel'] == codResponsavel)]
-                print(codRelacao[0])
                 return codRelacao[0]
             except:
-                print('erro')
+                pass
 
             return 0
-            # for row in self.WPensar.alunosResponsaveis[['id','mataluno', 'codresponsavel']].to_numpy():
-            #     # codigo do aluno e responsavel matriculaWPensar
-            #     # if self.stringComparation(codAluno, row[1]) and self.stringComparation(codResponsavel, row[2]):
-            #     if row[]codAluno, row[1]) and self.stringComparation(codResponsavel, row[2]):
-            #         return row[0]
-            # if type(codRelacao) is not bool:
-            #     return codRelacao
-            # else:
-            #     return 0
         else:
             return 0
 
     def doIncludeMatricula(self, data = None):
-        return self.sendDataToWPensar(target='matriculas', data = data)['codigo'] if data['matriculaWPensar'] else 'A matricula não foi realizada'
-        
+        try:
+            return self.sendDataToWPensar(target='matriculas', data = data)['codigo'] if data['matriculaWPensar'] else 'A matricula não foi realizada'
+        except:
+            return 'Erro ao matricular aluno na turma'
 
 
     def doInclude(self, data = None, target = 'alunos'):
@@ -113,14 +114,15 @@ class InclusionManager(object):
         This function returns pk number after consult or inclusion data at WPensar
         """
         data = self.ClickSign if data is None else data
-        
+        dontInsert = False
         if data['status'] == "Finalizado" and not data['teste']:
-            # Busca a informação de novo aluno na tabela da clickSign
+            # Busca a informação na tabela da clickSign
             if target == 'alunos':
                 isNewData = data['novo_aluno']
                 isExistWPensar = data['matriculaWPensar']
                 returnData = 'matricula'
             elif target == 'responsaveis':
+                dontInsert = True if data['nomeResponsavel'] == 'Primeiro Associado - Contratante' or data['nomeResponsavel'] == 'Segundo Associado - Contratante' else False
                 isNewData = data['novo_responsavel']
                 isExistWPensar = data['codigoResponsavel']
                 returnData = 'codigo'
@@ -132,7 +134,6 @@ class InclusionManager(object):
                 return None
             # Verifica nos dados importados na WPensar
             
-            # print("\nIniciando inclusão de alunos...")
             if (isNewData and isExistWPensar != 0): #True and True
                 """
                 Apesar de ser considerada uma nova entrada,
@@ -140,35 +141,33 @@ class InclusionManager(object):
                 retornaremos seu id
                 """
                 
-                # self.sendDataToWPensar(target=target, data = data)
-                
-                return [self.sendDataToWPensar(target=target, data = data)[f'{returnData}'], "Novo dado já existe na WPensar - Dados atualizados."]
+                return [self.sendDataToWPensar(target=target, data = data)[f'{returnData}'], "Dados atualizados."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
             elif (isNewData and isExistWPensar == 0): #True and False
                 '''
                 A informação é nova e ainda não foi inserido na plataforma
                 Após a inclusão, retornaremos seu id
                 '''
-                # print(self.sendDataToWPensar(target=target, data = data))
-                   
-                return [self.sendDataToWPensar(target=target, data = data)[f'{returnData}'], "Novos dados incluídos na plataforma."]
+                response = self.sendDataToWPensar(target=target, data = data)
+                try: 
+                    return [response[f'{returnData}'], "Dados inseridos."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
+                except:
+                    return [0, "Relação já existente na WPensar"]
+
             elif (not isNewData and isExistWPensar != 0): #False and True
                 """
                 A informação já existe na plataforma
                 retornaremos seu id
                 """
-                # print(self.sendDataToWPensar(target=target, data = data))
-                
-                return [self.sendDataToWPensar(target=target, data = data)[f'{returnData}'], "Dados atualizados com sucesso."]
+                response = self.sendDataToWPensar(target=target, data = data)
+                try:
+                    return [response[f'{returnData}'], "Dados atualizados."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
+                except:
+                    return [0, "Relação já existente na WPensar"]
             elif (not isNewData and isExistWPensar == 0): #False and False
                 """
                 A informação não é nova e não está cadastrada na plataforma
                 """
-                # if data['nomeAluno'] == 'Aluno teste Leonardo':
-                #     teste = dataAluno(data.to_dict())
-                    # print(self.WPensar.accessPoint.updateData(dataJson = teste.toJson()))
-                # print(self.sendDataToWPensar(target=target, data = data))
-                # print('"Incluir manualmente."')
-                return [0, "Incluir manualmente."]
+                return [0, "Incluir manualmente."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
             else:
                 return [0, "Erro"]
         else:
@@ -196,7 +195,6 @@ class InclusionManager(object):
 
 
     def doAllIncludes(self):
-        # self.dataframeStatus = self.ClickSign.copy() if self.dataframeStatus is None else self.dataframeStatus
         tqdm.pandas()
         """
         Incluir alunos
@@ -223,39 +221,35 @@ class InclusionManager(object):
         Incluir responsáveis
         O número de responsáveis depende da planilha
         """
-        list_responsibles = ['resp_finc', 'resp1']
+        list_responsibles = ['resp1']
+        list_responsibles.append('resp_finc') if 'resp_finc' in self.ClickSign.columns else ''
         list_responsibles.append('resp2') if 'resp2_nome' in self.ClickSign.columns else ''
 
         print("Iniciando inclusão de responsáveis")
-        # for radical in list_responsibles:
-        #     # Responsável Financeiro, Responsável 1 e (talvez) Responsável 2
-        #     print(f"Buscando os códigos dos responsáveis no campo {radical}...\n")
-        #     self.ClickSign[f'{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='responsaveis', radical = radical) if (x[f'{radical}_nome'] != '') else 0, axis = 1)
-        #     self.getDataResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
-        #     inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'responsaveis'), axis = 1)
-        #     self.ClickSign[f'{radical}_codigo'], self.ClickSign[f'{radical}_procedimento'] = inclusion[0]['codigo'], inclusion[1]
+        for radical in list_responsibles:
+            # Responsável Financeiro, Responsável 1 e (talvez) Responsável 2
+            print(f"Buscando os códigos dos responsáveis no campo {radical}...\n")
+            self.ClickSign[f'{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='responsaveis', radical = radical) if (x[f'{radical}_nome'] != '') else 0, axis = 1)
+            self.getDataResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
+            inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'responsaveis'), axis = 1)
+            self.ClickSign[f'{radical}_codigo'], self.ClickSign[f'{radical}_procedimento'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
             
 
-        #     print(f"Buscando relação entre responsável do campo {radical} e aluno...\n")
-        #     self.ClickSign[f'aluno_{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos-responsaveis', radical = radical) if (x[f'{radical}_codigo'] != 0) else 0, axis = 1)
-        #     self.getDataStudentResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
-        #     inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'alunos-responsaveis'), axis = 1)
-        #     self.ClickSign[f'aluno_{radical}_codigo'], self.ClickSign[f'aluno_{radical}_procedimento'] = inclusion[0]['id'], inclusion[1]
-        
-                
+            print(f"Buscando relação entre responsável do campo {radical} e aluno...\n")
+            self.ClickSign[f'aluno_{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos-responsaveis', radical = radical) if (x[f'{radical}_codigo'] != 0) else 0, axis = 1)
+            self.getDataStudentResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
+            inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'alunos-responsaveis'), axis = 1)
+            self.ClickSign[f'aluno_{radical}_codigo'], self.ClickSign[f'aluno_{radical}_procedimento'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
+        self.saveBackupResults()
+
+
+    def saveBackupResults(self):
         import os
         import openpyxl     
         filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', 'ResultIntegrations.xls')
         self.ClickSign.to_excel(filename, engine= 'openpyxl')
 
-        filename = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '01_tests', 'backup', 'alunos','backup.json')
-        self.WPensar.alunos.to_json(filename)
-
-        filename = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '01_tests', 'backup', 'responsaveis','backup.json')
-        self.WPensar.responsaveis.to_json(filename)
-
-        filename = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '01_tests', 'backup', 'alunos-responsaveis','backup.json')
-        self.WPensar.alunosResponsaveis.to_json(filename)
+    
         
               
     def getDataStudentResponsibleForInclusion(self, data, radical = 'resp_fin  c'):
@@ -335,14 +329,19 @@ class InclusionManager(object):
 
 class You(object):
     def __init__(self):
-        print("You:: Whoa! Marriage arrangements?")
+        import time
+        print("Iniciando inclusões no sistema WPensar...\n\n")
+        for i in range(3):
+            time.sleep(1)
+            print('.')
+            
 
     def askInclusionManager(self):
-        print("You:: Let's contact the event manager\n\n")
+        # print("You:: Let's contact the event manager\n\n")
         em = InclusionManager()
         em.doAllIncludes()
 
     def __del__(self):
-        print("You:: Thanks to Event Manager!\n\n")
+        print("Processo finalizado!!!")
 
 

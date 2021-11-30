@@ -1,6 +1,9 @@
+#! virtualenv/bin/env python
 import pandas as pd
 from designPartners.singleton import *
 from accessWPensar.accessWPensar import *
+from datetime import datetime
+from json import dumps
 
 class DataBaseWPensar(metaclass = MetaSingleton):
     # get all data to include in WPensar
@@ -10,25 +13,34 @@ class DataBaseWPensar(metaclass = MetaSingleton):
         self.responsaveis = False
         self.alunosResponsaveis = False
         self.getAllInformations()
+    
+    def saveBackup(self, target, data):
+        import os
+        filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'backup', target, 'backup')
+        with open(f'{filename}.json', 'w') as f:
+            f.write(data)
+
+        with open(f'{filename}-{datetime.now()}.json', 'w') as f:
+            f.write(data)
         
     def getInformations(self, target="alunos"):
         import os
-        filename = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(__file__))), '01_tests', 'backup', f'{target}','backup.json')
-        try:
-            # data = self.accessPoint.getInformations(pk='All', target=target)
-            # descomentar as linhas acima para voltar a buscar na WPensar
-            
-            # descomentar as linhas abaixo para voltar a buscar no backup da WPensar
-            with open(filename) as json_data:
-                data = json.load(json_data)
+        filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'backup', f'{target}','backup.json')
+        
+        # data = self.accessPoint.getInformations(pk='All', target=target)
+        # descomentar a linha acima para voltar a buscar na WPensar
+        
+        # descomentar as 3 linhas abaixo para voltar a buscar no backup da WPensar
+        with open(filename) as json_data:
+            data = json.load(json_data)
+        self.saveBackup(target=target, data = dumps(data))
+        
+        dataframe = pd.DataFrame.from_records(data)
 
-
-            dataframe = pd.DataFrame.from_records(data)
-
-            return dataframe
-        except:
-            print('Ocorreu um erro durante a importação dos dados. Tente novamente mais tarde.')
-            return False
+        return dataframe
+    # except:
+        # print('Ocorreu um erro durante a importação dos dados. Tente novamente mais tarde.')
+        # return False
 
     def getLoop(self, function, information):
         loopContinue = False

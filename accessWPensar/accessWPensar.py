@@ -144,8 +144,6 @@ class dataResponsavel(object):
         
         return response
 
-        
-
 class dataAluno(object):
     """
     This class creates a partner to include students data

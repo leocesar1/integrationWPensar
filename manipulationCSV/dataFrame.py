@@ -6,7 +6,7 @@ class DataBaseClickSign(metaclass = MetaSingleton):
     # get all data to include in WPensar
     def __init__(self, filename):
         import os     
-        filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', filename)
+        filename = os.path.join(os.path.dirname('__file__'), 'planilha_clicksign', filename)
 
         try:
             if filename.split('.')[-1] == 'csv':
@@ -588,35 +588,34 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         finishedData = self.dataframeTreated.query('status == "Finalizado"')
         print('Avaliação das inclusões...')
         print('--------------------------------------------------------')
-        print('Foram importados %(dados)s dados.' % {'dados': totalData})
+        print(f'Foram importados {totalData} dados.')
         
-        print('Documentos finalizados: %s ' % len(finishedData) )
-        # print('E serão incluídos os seguintes dados:')
-        # [print(i) for i in columnNames]
+        print(f'Documentos finalizados: {len(finishedData)}')
         
         # New students
         print('--------------------------------------------------------')
         newData = self.dataframeTreated.query('status == "Finalizado" & (novo_aluno == True) ')
-        print('Novos alunos: %s dados', len(newData) )
+        print(f'Novos alunos: {len(newData)} dados')
         
         # New Responsables
         print('--------------------------------------------------------')
         newData = self.dataframeTreated.query('status == "Finalizado" & (novo_responsavel == True) ')
-        print('Novos responsáveis: %s dados', len(newData) )
+        print(f'Novos responsáveis: {len(newData)} dados')
 
         # Old students
         print('--------------------------------------------------------')
         newData = self.dataframeTreated.query('status == "Finalizado" & (novo_aluno == False) ')
-        print('Alunos para renovação ou retorno de ex-alunos: %s dados', len(newData) )
+        print(f'Alunos para renovação ou retorno de ex-alunos: {len(newData)} dados')
         
         # Old Responsibles
         print('--------------------------------------------------------')
         newData = self.dataframeTreated.query('status == "Finalizado" & (novo_responsavel == False) ')
-        print('Responsáveis já incluídos no sistema: %s dados', len(newData) )
+        print(f'Responsáveis já incluídos no sistema: {len(newData)} dados')
 
 
         # Test data
         print('--------------------------------------------------------')
         newData = self.dataframeTreated.query('status == "Finalizado" & (teste == True) ')
-        print('Dados com alunos teste e finalizados: %s dados', len(newData) )
+        print(f'Dados com alunos teste e finalizados: {len(newData)} dados' )
         
+    
