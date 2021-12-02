@@ -33,9 +33,15 @@ class InclusionManager(object):
         files = [os.path.join(nome) for nome in os.listdir(folder)]
         print(f"""Escolha o número correspondente ao arquivo que deseja importar:\n""")
         for i in range(0, len(files)):
-            print(f"[{i+1}] - {files[i]}\n")
-        choice = input(":")
-        return files[int(choice)-1]
+            print(f"[{i+1}] - {files[i]}")
+        while True:
+            choice = input(f"\nEscolha um número de 1 a {i+1} ou 0 para cancelar:")
+            if int(choice) >= 1 and int(choice) <= i+1:
+                return files[int(choice)-1]
+            elif int(choice) > i+1:
+                print("Número inválido")
+            else:
+                return False
         
         
          
@@ -43,6 +49,8 @@ class InclusionManager(object):
     def getTableCSV(self):
         # import os
         nameFile = self.choiceFile()
+        if nameFile == False:
+            exit()
         filename = nameFile#os.path.join(os.path.dirname('__file__'), 'planilha_clicksign', filename)
         self.dataBaseClickSign = DataBaseClickSign(filename)
         self.ClickSign = self.dataBaseClickSign.dataframeTreated

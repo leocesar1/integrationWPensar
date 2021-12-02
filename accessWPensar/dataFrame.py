@@ -24,15 +24,15 @@ class DataBaseWPensar(metaclass = MetaSingleton):
             f.write(data)
         
     def getInformations(self, target="alunos"):
-        import os
-        filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'backup', f'{target}','backup.json')
         
-        # data = self.accessPoint.getInformations(pk='All', target=target)
+        data = self.accessPoint.getInformations(pk='All', target=target)
         # descomentar a linha acima para voltar a buscar na WPensar
         
         # descomentar as 3 linhas abaixo para voltar a buscar no backup da WPensar
-        with open(filename) as json_data:
-            data = json.load(json_data)
+        # import os
+        # filename = os.path.join(os.path.dirname(os.path.dirname(__file__)), 'backup', f'{target}','backup.json')
+        # with open(filename) as json_data:
+        #     data = json.load(json_data)
         self.saveBackup(target=target, data = dumps(data))
         
         dataframe = pd.DataFrame.from_records(data)
