@@ -9,7 +9,7 @@ from unidecode import unidecode
 class InclusionManager(object):
     def __init__(self):
         print("Iniciando processo de inclusão dos alunos na plataforma WPensar \n")
-        self.getDataframeStatus()
+        # self.getDataframeStatus()
         self.getTables()
 
     def getDataframeStatus(self):
@@ -104,10 +104,13 @@ class InclusionManager(object):
 
     def doIncludeMatricula(self, data = None):
         try:
-            return self.sendDataToWPensar(target='matriculas', data = data)['codigo'] if data['matriculaWPensar'] else 'A matricula não foi realizada'
+            
+            return self.sendDataToWPensar(target='matriculas', data = data)['codigo'] if data['matriculaWPensar'] != 0 else 'A matricula não foi realizada'
         except:
-            return 'Erro ao matricular aluno na turma'
-
+            if not self.sendDataToWPensar(target='matriculas', data = data):   
+                return 'O aluno já está na turma'
+            else:
+                return 'Erro'
 
     def doInclude(self, data = None, target = 'alunos'):
         """
@@ -199,10 +202,10 @@ class InclusionManager(object):
         """
         Incluir alunos
         """
-        print("Iniciando inclusão de alunos")
+        print("\n\nIniciando inclusão de alunos")
         print("Buscando números de matrícula na WPensar...\n")
         self.ClickSign['matriculaWPensar'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos'), axis = 1)
-        print("Confirmando qual o procedimento a ser adotado...\n")
+        print("\n\nConfirmando qual o procedimento a ser adotado...\n")
         inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x), axis = 1)
         self.ClickSign['matriculaWPensar'], self.ClickSign['inclusaoAluno'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
         # self.ClickSign['matriculaWPensar'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos'), axis = 1)
@@ -213,7 +216,7 @@ class InclusionManager(object):
         """
         Matricular alunos
         """
-        print("Inserindo as matrículas")
+        print("\n\nInserindo as matrículas")
         self.ClickSign['matriculaTurma'] = self.ClickSign.progress_apply(lambda x: self.doIncludeMatricula(x), axis = 1)
         
 
@@ -225,17 +228,17 @@ class InclusionManager(object):
         list_responsibles.append('resp_finc') if 'resp_finc' in self.ClickSign.columns else ''
         list_responsibles.append('resp2') if 'resp2_nome' in self.ClickSign.columns else ''
 
-        print("Iniciando inclusão de responsáveis")
+        print("\n\nIniciando inclusão de responsáveis")
         for radical in list_responsibles:
             # Responsável Financeiro, Responsável 1 e (talvez) Responsável 2
-            print(f"Buscando os códigos dos responsáveis no campo {radical}...\n")
+            print(f"\n\nBuscando os códigos dos responsáveis no campo {radical}...")
             self.ClickSign[f'{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='responsaveis', radical = radical) if (x[f'{radical}_nome'] != '') else 0, axis = 1)
             self.getDataResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
             inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'responsaveis'), axis = 1)
             self.ClickSign[f'{radical}_codigo'], self.ClickSign[f'{radical}_procedimento'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
             
 
-            print(f"Buscando relação entre responsável do campo {radical} e aluno...\n")
+            print(f"\n\nBuscando relação entre responsável do campo {radical} e aluno...")
             self.ClickSign[f'aluno_{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos-responsaveis', radical = radical) if (x[f'{radical}_codigo'] != 0) else 0, axis = 1)
             self.getDataStudentResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
             inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'alunos-responsaveis'), axis = 1)
@@ -246,7 +249,7 @@ class InclusionManager(object):
     def saveBackupResults(self):
         import os
         import openpyxl     
-        filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', 'ResultIntegrations.xls')
+        filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', f'ResultIntegrations_{datetime.datetime.now()}.xls')
         self.ClickSign.to_excel(filename, engine= 'openpyxl')
 
     
@@ -330,11 +333,12 @@ class InclusionManager(object):
 class You(object):
     def __init__(self):
         import time
-        print("Iniciando inclusões no sistema WPensar...\n\n")
-        for i in range(3):
+        print("Iniciando inclusões no sistema WPensar", end="",flush=True)
+        for i in range(2):
             time.sleep(1)
-            print('.')
-            
+            print('.',end="", flush=True)
+        print('.')
+        time.sleep(1)
 
     def askInclusionManager(self):
         # print("You:: Let's contact the event manager\n\n")

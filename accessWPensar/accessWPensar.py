@@ -257,5 +257,5 @@ class wPensarAccessPoint(metaclass = MetaSingleton):
 
             return r
         except:
-            print("Não foi possível inserir os dados na plataforma WPensar.")
+            # print("Erro ao Não foi possível inserir os dados na plataforma WPensar.")
             return False
