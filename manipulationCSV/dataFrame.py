@@ -189,10 +189,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                 except:
                     pass
             try:
-                self.dataframeTreated['resp_finc_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento do Responsável Financeiro']
+                self.dataframeTreated['resp_finc_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento do Responsável Financeiro'].apply(lambda x: x.replace(' ','').replace('/','-'))
             except:
                 try:
-                    self.dataframeTreated['resp_finc_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento.1']
+                    self.dataframeTreated['resp_finc_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento.1'].apply(lambda x: x.replace(' ','').replace('/','-'))
                 except:
                     pass
             try:
@@ -305,14 +305,14 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                 except:
                     pass
             try:
-                self.dataframeTreated['resp2_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento do Segundo Associado']
+                self.dataframeTreated['resp2_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento do Segundo Associado'].apply(lambda x: x.replace(' ','').replace('/','-'))
             except:
                 try:
-                    self.dataframeTreated['resp2_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento - Segundo Associado']
+                    self.dataframeTreated['resp2_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento - Segundo Associado'].apply(lambda x: x.replace(' ','').replace('/','-'))
                 except:
                     pass
             try:
-                self.dataframeTreated['resp2_tel_residencial'] = dataframe['Formulário 1 Telefone Residencial do Segundo Associado']
+                self.dataframeTreated['resp2_tel_residencial'] = dataframe['Formulário 1 Telefone Residencial do Segundo Associado'].apply(lambda x: x.replace(' ','').replace('/','-'))
             except:
                 try:
                     self.dataframeTreated['resp2_tel_residencial'] = dataframe['Formulário 1 Telefone - Segundo Associado']
@@ -442,12 +442,12 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                 except:
                     self.dataframeTreated['resp1_cpf'] = dataframe['Formulário 1 CPF']
             try:
-                self.dataframeTreated['resp1_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento do Primeiro Associado']
+                self.dataframeTreated['resp1_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento do Primeiro Associado'].apply(lambda x: x.replace(' ','').replace('/','-'))
             except:
                 try:
-                    self.dataframeTreated['resp1_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento - Primeiro Associado']
+                    self.dataframeTreated['resp1_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento - Primeiro Associado'].apply(lambda x: x.replace(' ','').replace('/','-'))
                 except:
-                    self.dataframeTreated['resp1_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento']
+                    self.dataframeTreated['resp1_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento'].apply(lambda x: x.replace(' ','').replace('/','-'))
             try:
                 self.dataframeTreated['resp1_tel_residencial'] = dataframe['Formulário 1 Telefone Residencial do Primeiro Associado']
             except:
