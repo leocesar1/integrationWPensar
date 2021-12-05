@@ -255,9 +255,9 @@ class InclusionManager(object):
 
 
     def saveBackupResults(self):
-        import os
-        import openpyxl     
-        filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', f'ResultIntegrations_{datetime.datetime.now()}.xls')
+        import os, datetime
+        # import openpyxl     
+        filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', f'ResultIntegrations_{datetime.datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.xls')
         self.ClickSign.to_excel(filename, engine= 'openpyxl')
 
     

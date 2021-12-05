@@ -538,6 +538,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         totalData = len(self.dataframeTreated)
         columnNames = self.dataframeTreated.columns
         finishedData = self.dataframeTreated.query('status == "Finalizado"')
+        f"""
+        Foram importados {totalData} dado(s). Desse total, {len(finishedData)} foram finalizados.
+        """
+       
         print('Avaliação das inclusões...')
         print('--------------------------------------------------------')
         print(f'Foram importados {totalData} dados.')

@@ -176,7 +176,7 @@ class wPensarAccessPoint(metaclass = MetaSingleton):
             fileTokenName = False
 
         if fileTokenName: 
-            with open(fileTokenName, 'r', encoding= 'utf-8') as f:
+            with open(fileTokenName, 'r') as f:
                 accessToken = accessToken = json.loads(f.read())['accessToken']
 
             # Create a headers
@@ -216,7 +216,7 @@ class wPensarAccessPoint(metaclass = MetaSingleton):
                         'pagination': pagination,
                         'target': target}
                     r = get(url, headers=self.headers).text
-                    for item in json.loads(r, encoding='utf-8')['results']:
+                    for item in json.loads(r)['results']:
                         listData.append(item)
                     printProgressBar(i + 1, nPag, prefix='Progresso atual:',
                                     suffix='Completo', length=50)

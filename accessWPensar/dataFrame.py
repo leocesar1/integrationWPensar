@@ -20,7 +20,7 @@ class DataBaseWPensar(metaclass = MetaSingleton):
         with open(f'{filename}.json', 'w') as f:
             f.write(data)
 
-        with open(f'{filename}-{datetime.now()}.json', 'w') as f:
+        with open(f'{filename}-{datetime.now().strftime("%Y-%m-%d-%H-%M-%S")}.json', 'w') as f:
             f.write(data)
         
     def getInformations(self, target="alunos"):
