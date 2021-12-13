@@ -1,3 +1,5 @@
+from math import nan, isnan
+from numpy import NaN
 import pandas as pd
 from designPartners.singleton import *
 from accessWPensar.accessWPensar import *
@@ -37,17 +39,23 @@ class DataBaseClickSign(metaclass = MetaSingleton):
             'Novo aluno (ingresso externo) ',
             'Novo aluno (dependente de ex - aluno da escola)',
             ' Novo aluno (dependente de associado inativo)',
-            'Ex - aluno (dependente de associado inativo)'
+            'Ex - aluno (dependente de associado inativo)',
+            nan
         )
 
         listOfPossibilitiesOldStudents = ('Aluno da Escola')
-
         try:
             if studentSituation in listOfPossibilitiesNewStudents:
+                print(True)
+                return True
+            elif isnan(studentSituation):
+                print(True)
                 return True
             elif studentSituation in listOfPossibilitiesOldStudents:
+                print(True)
                 return False
             else:
+                print(None)
                 return None
         except:
             return None
@@ -447,7 +455,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                 try:
                     self.dataframeTreated['resp1_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento - Primeiro Associado'].apply(lambda x: x.replace(' ','').replace('/','-'))
                 except:
-                    self.dataframeTreated['resp1_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento'].apply(lambda x: x.replace(' ','').replace('/','-'))
+                    try:
+                        self.dataframeTreated['resp1_dt_nascimento'] = dataframe['Formulário 1 Data de Nascimento'].apply(lambda x: x.replace(' ','').replace('/','-'))
+                    except:
+                        pass
             try:
                 self.dataframeTreated['resp1_tel_residencial'] = dataframe['Formulário 1 Telefone Residencial do Primeiro Associado']
             except:
@@ -523,7 +534,7 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         # filter by renovations case
         dataframe = self.dataframeTreated if dataframe is None else dataframe
         
-        return self.dataframe.loc[(self.dataframe['situacao'] == 'Aluno novo') & (self.dataframe['Status do documento'] == 'Finalizado')]
+        return self.dataframe.loc[((self.dataframe['situacao'] == 'Aluno novo') or (self.dataframe['situacao'] == '')) & (self.dataframe['Status do documento'] == 'Finalizado')]
 
     def saveAsXls(self, dataframe = None):
         dataframe = self.dataframeTreated if dataframe is None else dataframe

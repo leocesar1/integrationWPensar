@@ -151,8 +151,10 @@ class InclusionManager(object):
                 o dado já existe na plataforma
                 retornaremos seu id
                 """
-                
-                return [self.sendDataToWPensar(target=target, data = data)[f'{returnData}'], "Dados atualizados."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
+                try:
+                    return [self.sendDataToWPensar(target=target, data = data)[f'{returnData}'], "Dados atualizados."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
+                except:
+                    return [0, "Erro"]
             elif (isNewData and isExistWPensar == 0): #True and False
                 '''
                 A informação é nova e ainda não foi inserido na plataforma
@@ -216,10 +218,6 @@ class InclusionManager(object):
         print("\n\nConfirmando qual o procedimento a ser adotado...\n")
         inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x), axis = 1)
         self.ClickSign['matriculaWPensar'], self.ClickSign['inclusaoAluno'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
-        # self.ClickSign['matriculaWPensar'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos'), axis = 1)
-        # self.ClickSign['matriculaWPensar'] = inclusion.progress_apply(lambda x: x[0]['matricula'], axis = 1) 
-        # print(inclusion)
-
 
         """
         Matricular alunos
@@ -239,16 +237,18 @@ class InclusionManager(object):
         print("\n\nIniciando inclusão de responsáveis")
         for radical in list_responsibles:
             # Responsável Financeiro, Responsável 1 e (talvez) Responsável 2
-            print(f"\n\nBuscando os códigos dos responsáveis no campo {radical}...")
+            print(f"\nBuscando os códigos dos responsáveis no campo {radical}...")
             self.ClickSign[f'{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='responsaveis', radical = radical) if (x[f'{radical}_nome'] != '') else 0, axis = 1)
             self.getDataResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
+            print(f"Incluindo responsáveis no campo {radical}...")
             inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'responsaveis'), axis = 1)
             self.ClickSign[f'{radical}_codigo'], self.ClickSign[f'{radical}_procedimento'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
             
 
-            print(f"\n\nBuscando relação entre responsável do campo {radical} e aluno...")
+            print(f"\nBuscando relação entre responsável do campo {radical} e aluno...")
             self.ClickSign[f'aluno_{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos-responsaveis', radical = radical) if (x[f'{radical}_codigo'] != 0) else 0, axis = 1)
             self.getDataStudentResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
+            print(f"\nInserindo relação entre responsável do campo {radical} e aluno...")
             inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'alunos-responsaveis'), axis = 1)
             self.ClickSign[f'aluno_{radical}_codigo'], self.ClickSign[f'aluno_{radical}_procedimento'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
         self.saveBackupResults()

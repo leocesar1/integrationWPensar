@@ -16,6 +16,7 @@ class dataMatricula(object):
         self.codTurma = self.getTurma(data['serie2022'])
 
     def getTurma(self, turma):
+        print(turma)
         turma = turma.replace('Berçário II - Integral', "Berçário II (Integral)")
         turma = turma.replace('Berçário II - Parcial', "Berçário II (Parcial)")
         turma = turma.replace('Maternal I - Integral', "Maternal I (Integral)")
