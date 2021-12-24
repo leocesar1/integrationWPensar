@@ -1,4 +1,5 @@
-from requests import get, post, put
+from numpy import NaN
+from requests import get, post, put, delete
 import json 
 from graphicElements.progressBar import *
 from designPartners.singleton import *
@@ -16,7 +17,6 @@ class dataMatricula(object):
         self.codTurma = self.getTurma(data['serie2022'])
 
     def getTurma(self, turma):
-        print(turma)
         turma = turma.replace('Berçário II - Integral', "Berçário II (Integral)")
         turma = turma.replace('Berçário II - Parcial', "Berçário II (Parcial)")
         turma = turma.replace('Maternal I - Integral', "Maternal I (Integral)")
@@ -32,6 +32,7 @@ class dataMatricula(object):
         turma = turma.replace('Pré- Escola II - Manhã', "Pré II (Parcial)")
         turma = turma.replace('Pré- Escola II - Tarde', "Pré II (Parcial)")
         turma = turma.replace('Pré- Escola II - Integral', "Pré II (Integral)")
+        turma = turma.replace('Pré- Escola II -  Integral', "Pré II (Integral)")
 
         turma = turma.replace('º', "")
         turma = turma.replace('EF I - Manhã', "EFI")
@@ -141,7 +142,7 @@ class dataResponsavel(object):
         response['complemento'] = self.complemento
         # response['escolaridadeformacao'] = self.escolaridadeformacao
 
-        response = {k: v for k, v in response.items() if v != '' and v != None}
+        response = {k: v for k, v in response.items() if v != '' and v != None and v!= NaN}
         
         return response
 
@@ -255,6 +256,21 @@ class wPensarAccessPoint(metaclass = MetaSingleton):
                 r = post(url, headers=self.headers, data = dataJson).json()
             else:
                 r = put(url, headers=self.headers, data = dataJson).json()
+            
+            return r
+        except:
+            # print("Erro ao Não foi possível inserir os dados na plataforma WPensar.")
+            return False
+    
+    def deleteData(self, pk, target = 'responsaveis'):
+        url = f'https://api.wpensar.com.br/{target}/' if type(pk) == str else f'https://api.wpensar.com.br/{target}/{pk}/' 
+        
+        try:
+            if type(pk) == str:
+                pass        
+                # r = post(url, headers=self.headers).json()
+            else:
+                r = delete(url, headers=self.headers).json()
 
             return r
         except:

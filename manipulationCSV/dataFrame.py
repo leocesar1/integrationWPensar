@@ -1,5 +1,6 @@
 from math import nan, isnan
 from numpy import NaN
+import numpy as np
 import pandas as pd
 from designPartners.singleton import *
 from accessWPensar.accessWPensar import *
@@ -7,9 +8,10 @@ from accessWPensar.accessWPensar import *
 class DataBaseClickSign(metaclass = MetaSingleton):
     # get all data to include in WPensar
     def __init__(self, filename):
+        self.filename = filename
         import os     
         filename = os.path.join(os.path.dirname('__file__'), 'planilha_clicksign', filename)
-
+        # self.dataframeManualInsertions = pd.read_excel(os.path.join(os.path.dirname('__file__'), 'planilha_clicksign', 'Relatório finalizado_ok.xlsx'))
         try:
             if filename.split('.')[-1] == 'csv':
                 self.dataframeOriginal = pd.read_csv(filename)
@@ -22,16 +24,23 @@ class DataBaseClickSign(metaclass = MetaSingleton):
             # self.dataframeNewRegistrations = pd.DataFrame({'A' : []})
         else:
             self.treatDataFrame()
-        
+    
+    def removeEmptyColumns(self):
+        # print(len(self.dataframeOriginal.columns))
+        self.dataframeOriginal.dropna(how='all', axis=1, inplace=True)
+        # print(self.dataframeOriginal.columns)
+
     def treatDataFrame(self):
-        self.getDocumentsInformations()
+        self.removeEmptyColumns()
+        self.getDocumentsInformations() # Ajeitar excessões aqui
         self.getAlunoData()
         self.getResponsavelOneData()
         self.getResponsavelTwoData()
         self.getResponsavelFinanceiroData()
         self.setInclusionsSituations()
-        # self.applyFilters()
+        # print(self.dataframeTreated)
         self.getReport()
+        self.saveAsXls()
 
     def isNewStudent(self, studentSituation):
         listOfPossibilitiesNewStudents = (
@@ -46,16 +55,16 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         listOfPossibilitiesOldStudents = ('Aluno da Escola')
         try:
             if studentSituation in listOfPossibilitiesNewStudents:
-                print(True)
+                # print(True)
                 return True
             elif isnan(studentSituation):
-                print(True)
+                # print(True)
                 return True
             elif studentSituation in listOfPossibilitiesOldStudents:
-                print(True)
+                # print(True)
                 return False
             else:
-                print(None)
+                # print(None)
                 return None
         except:
             return None
@@ -64,14 +73,16 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         # filter by renovations case
         
 
-        listOfPossibilitiesOldResponsibles = (   
+        listOfPossibilitiesOldResponsibles = (
+            
+            'Aluno da Escola'
+              
         )
 
         listOfPossibilitiesNewResponsibles = (
             'Novo aluno (ingresso externo) ',
             'Ex - aluno (dependente de associado inativo)',
             'Novo aluno (dependente de ex - aluno da escola)',
-            'Aluno da Escola',
             'Aluno Novo (dependente de associado ativo)',
             ' Novo aluno (dependente de associado inativo)'
         )
@@ -89,7 +100,7 @@ class DataBaseClickSign(metaclass = MetaSingleton):
 
     def isFinished(self, text):
         # verify if a field is a empty field
-        return True if "Finalizado" else False
+        return True if text == "Finalizado" else False
 
     def isTestStudent(self, text):
         # verify if is a teste
@@ -112,38 +123,68 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         ]
         return True if text in listTestNames else False
 
+    def calculateSimilarity(self, text1, text2):
+        import jellyfish as jf
+        
+        return jf.levenshtein_distance(''.join(text1.split()), ''.join(text2.split()))
+
+    # def isFinishedManual(self, text ):
+    #     resultMin = 100
+        
+    #     try:
+    #         text = ''.join([i for i in text if not i.isdigit()])            
+    #         text.replace(".docx","").replace(".pdf","")
+    #         for row in self.dataframeManualInsertions[['Nome do documento']].to_numpy():
+    #             rowTreated = ''.join([i for i in row[0] if not i.isdigit()])            
+    #             rowTreated.replace(".docx","").replace(".pdf","")
+    #             resultNow = self.calculateSimilarity(text, rowTreated)
+    #             if resultNow < resultMin:
+    #                 resultMin = resultNow
+    #     except:
+    #         pass
+    #     print(text, resultMin)
+
     def setInclusionsSituations(self):
         # includes all        
         self.dataframeTreated['novo_aluno'] = self.dataframeTreated.apply(lambda x: self.isNewStudent(x['situacao']), axis = 1)
         self.dataframeTreated['novo_responsavel'] = self.dataframeTreated.apply(lambda x: self.isNewResponsible(x['situacao']), axis = 1)
         self.dataframeTreated['teste'] = self.dataframeTreated.apply(lambda x: self.isTestStudent(x['nomeAluno']), axis = 1)
         self.dataframeTreated['finalizado'] = self.dataframeTreated.apply(lambda x: self.isFinished(x['status']), axis = 1)
+        # self.dataframeOriginal.apply(lambda x: self.isFinishedManual(x['Nome do documento']), axis = 1)
 
     def getDocumentsInformations(self, dataframe = None):
+        # try:
         dataframe = self.dataframeOriginal if dataframe is None else dataframe
         
         self.dataframeTreated = dataframe[['Status do documento']].copy()
         self.dataframeTreated = self.dataframeTreated.rename(columns= {'Status do documento': 'status'})
         # return self.dataframeTreated
 
+    def getData(self, columnTreated, possiblesColumns, dataframe):
+        # Refatorando o tratamento de dados
+        dataframe = self.dataframeOriginal if dataframe is None else dataframe
+        # self.dataframeTreated[columnTreated] = 
+        pass
+
     def getAlunoData(self, dataframe = None):
         dataframe = self.dataframeOriginal if dataframe is None else dataframe
         
+        
         try:
-            self.dataframeTreated['nomeAluno'] = dataframe['Formulário 1 Nome do Aluno (a)']
+            self.dataframeTreated['nomeAluno'] = dataframe['Formulário 1 Nome completo do Aluno (a) :']    
         except:
-            self.dataframeTreated['nomeAluno'] = dataframe['Formulário 1 Nome completo do Aluno (a) :']
+            self.dataframeTreated['nomeAluno'] = dataframe['Formulário 1 Nome do Aluno (a)']
         finally:
             try:
-                self.dataframeTreated['serie2022'] = dataframe['Formulário 1 Série pretendida em 2022']
+                self.dataframeTreated['serie2022'] = dataframe['Formulário 1 Série pretendida em 2022:']    
             except:
-                self.dataframeTreated['serie2022'] = dataframe['Formulário 1 Série pretendida em 2022:']
+                self.dataframeTreated['serie2022'] = dataframe['Formulário 1 Série pretendida em 2022']
             finally:
                 try:
-                    self.dataframeTreated['situacao'] = dataframe['Formulário 1 Situação:']
+                    self.dataframeTreated['situacao'] = dataframe['Formulário 1 Situação do Aluno:']    
                 except:
                     try:
-                        self.dataframeTreated['situacao'] = dataframe['Formulário 1 Situação do Aluno:']
+                        self.dataframeTreated['situacao'] = dataframe['Formulário 1 Situação:']    
                     except:
                         self.dataframeTreated['situacao'] = dataframe['Formulário 1 Matrícula']
         return self.dataframeTreated
@@ -216,9 +257,13 @@ class DataBaseClickSign(metaclass = MetaSingleton):
                 try:
                     self.dataframeTreated['resp_finc_tel_celular'] = dataframe['Formulário 1 Telefone - Responsável Financeiro']
                 except:
-                    self.dataframeTreated['resp_finc_tel_celular'] = dataframe['Formulário 1 Telefone Celular.1']
+                    try:
+                        self.dataframeTreated['resp_finc_tel_celular'] = dataframe['Formulário 1 Telefone Celular.1']
+                    except:
+                        pass
             try:
                 self.dataframeTreated['resp_finc_email'] = dataframe['Formulário 1 E-mail do Responsável Financeiro']
+
             except:
                 try:
                     self.dataframeTreated['resp_finc_email'] = dataframe['Formulário 1 E-mail - Responsável Financeiro']
@@ -540,9 +585,9 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         dataframe = self.dataframeTreated if dataframe is None else dataframe
         
         import os
-        import xlwt     
-        filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', 'exportTestFile.xls')
-        dataframe.to_excel(filename)
+        # import xlwt     
+        filename = os.path.join(os.path.dirname('__file__'), 'reports_folder', self.filename.split(".")[0]+'exported.xls')
+        dataframe.to_excel(filename,engine= 'openpyxl')
 
     def getReport(self):
         # All data

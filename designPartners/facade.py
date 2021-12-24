@@ -6,10 +6,25 @@ import pandas as pd
 from tqdm import tqdm
 from unidecode import unidecode
 
-class InclusionManager(object):
+class DeletionManager(object):
     def __init__(self):
         print("Iniciando processo de inclusão dos alunos na plataforma WPensar \n")
         # self.getDataframeStatus()
+        self.getTableWPensar()
+    
+    def getTableWPensar(self):
+        self.WPensar = DataBaseWPensar()
+
+    def doDelete(self):
+        for row in self.WPensar.responsaveis[['nome', 'codigo']].to_numpy():
+            if row[0] == "nan":
+                # print(f"{row[1]} - {row[0]}")
+                print(self.WPensar.accessPoint.deleteData(pk = row[1]))
+
+class InclusionManager(object):
+    def __init__(self):
+        print("Iniciando processo de inclusão dos alunos na plataforma WPensar \n")
+        self.getDataframeStatus()
         self.getTables()
 
     def getDataframeStatus(self):
@@ -78,6 +93,23 @@ class InclusionManager(object):
         except:
             return False
 
+    def searchInAtLastInclusions(self, data, target = 'alunos', radical =''):
+        if target =='alunos':
+            pass
+        elif target == 'responsaveis':
+            codResponsavel = False
+            for row in self.newResponsibles[['nome', 'codigo']].to_numpy():
+                if self.stringComparation(data[f'{radical}_nome'], row[0]):
+                    codResponsavel = row[1]
+            if type(codResponsavel) is not bool:
+                return codResponsavel
+            else:
+                return 0
+        elif target == 'alunos-responsaveis':
+            pass
+        else:
+            return 0
+
     def searchInWPensar(self, data, target = 'alunos', radical =''):
         if target =='alunos':
             matricula = False
@@ -99,14 +131,15 @@ class InclusionManager(object):
                 return 0
         elif target == 'alunos-responsaveis':
             codAluno = data['matriculaWPensar']
-            codResponsavel = data[f'codigoResponsavel']            
-            try:
-                codRelacao = self.WPensar.alunosResponsaveis['id'][(self.WPensar.alunosResponsaveis['mataluno'] == codAluno) & (self.WPensar.alunosResponsaveis['codresponsavel'] == codResponsavel)]
-                return codRelacao[0]
-            except:
-                pass
-
-            return 0
+            codResponsavel = data[f'codigoResponsavel']
+            codRelacao = False
+            for row in self.WPensar.alunosResponsaveis[["id", "mataluno", "codresponsavel"]].to_numpy():
+                if codAluno == row[1] and codResponsavel == row[2]:
+                    codRelacao = row[0]
+            if type(codRelacao) is not bool:
+                return codRelacao
+            else:
+                return 0            
         else:
             return 0
 
@@ -215,15 +248,15 @@ class InclusionManager(object):
         print("\n\nIniciando inclusão de alunos")
         print("Buscando números de matrícula na WPensar...\n")
         self.ClickSign['matriculaWPensar'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos'), axis = 1)
-        print("\n\nConfirmando qual o procedimento a ser adotado...\n")
-        inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x), axis = 1)
-        self.ClickSign['matriculaWPensar'], self.ClickSign['inclusaoAluno'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
+        # print("\n\nConfirmando qual o procedimento a ser adotado...\n")
+        # inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x), axis = 1)
+        # self.ClickSign['matriculaWPensar'], self.ClickSign['inclusaoAluno'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
 
         """
         Matricular alunos
         """
-        print("\n\nInserindo as matrículas")
-        self.ClickSign['matriculaTurma'] = self.ClickSign.progress_apply(lambda x: self.doIncludeMatricula(x), axis = 1)
+        # print("\n\nInserindo as matrículas")
+        # self.ClickSign['matriculaTurma'] = self.ClickSign.progress_apply(lambda x: self.doIncludeMatricula(x), axis = 1)
         
 
         """
@@ -231,26 +264,56 @@ class InclusionManager(object):
         O número de responsáveis depende da planilha
         """
         list_responsibles = ['resp1']
-        list_responsibles.append('resp_finc') if 'resp_finc' in self.ClickSign.columns else ''
+        list_responsibles.append('resp_finc') if 'resp_finc_nome' in self.ClickSign.columns else ''
         list_responsibles.append('resp2') if 'resp2_nome' in self.ClickSign.columns else ''
 
-        print("\n\nIniciando inclusão de responsáveis")
+        self.newResponsibles = pd.DataFrame(columns=['nome', 'codigo'])
+        self.setNewDataColumnsForResponsibles()
+        print("\n\nIniciando inclusão de responsáveis...")
+        
         for radical in list_responsibles:
+            self.ClickSign[f'{radical}_codigo'], self.ClickSign[f'{radical}_procedimento'] = 0, 0
+            self.ClickSign[f'aluno_{radical}_codigo'], self.ClickSign[f'aluno_{radical}_procedimento'] = 0, 0
             # Responsável Financeiro, Responsável 1 e (talvez) Responsável 2
-            print(f"\nBuscando os códigos dos responsáveis no campo {radical}...")
-            self.ClickSign[f'{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='responsaveis', radical = radical) if (x[f'{radical}_nome'] != '') else 0, axis = 1)
-            self.getDataResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
-            print(f"Incluindo responsáveis no campo {radical}...")
-            inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'responsaveis'), axis = 1)
-            self.ClickSign[f'{radical}_codigo'], self.ClickSign[f'{radical}_procedimento'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
+            printProgressBar(0, len(self.ClickSign), prefix='Progresso atual:',
+                                suffix='Completo', length=50)
+            for index, row in self.ClickSign.iterrows():
+                # 1- Verificar na WPensar
+                self.ClickSign.loc[index, f'{radical}_codigo'] = self.searchInWPensar(row, target='responsaveis', radical = radical) if (row[f'{radical}_nome'] != '') else 0
+                # 2- Verificar se acabou de ser concluída
+                if self.ClickSign.loc[index, f'{radical}_codigo'] == 0:
+                    self.ClickSign.loc[index, f'{radical}_codigo'] = self.searchInAtLastInclusions(row, target='responsaveis', radical = radical) if (row[f'{radical}_nome'] != '') else 0
+
+                self.ClickSign.loc[index, f'aluno_{radical}_codigo'] = self.searchInWPensar(row, target='alunos-responsaveis', radical = radical) if (row[f'{radical}_codigo'] != 0) else 0
+
+                # 3- Inserir e retornar inclusão
+                self.getDataResponsibleForInclusion(index, data = row, radical=f'{radical}')
+                self.getDataStudentResponsibleForInclusion(index, data = self.ClickSign, radical=f'{radical}')
+                # self.ClickSign.loc[index,f'{radical}_codigo'], self.ClickSign.loc[index,f'{radical}_procedimento'] = self.doInclude(data = row, target= 'responsaveis')
+                # self.ClickSign.loc[index, f'aluno_{radical}_codigo'], self.ClickSign.loc[index, f'aluno_{radical}_procedimento'] = self.doInclude(data = row, target= 'alunos-responsaveis')  
+                
+                if self.ClickSign.loc[index, f'{radical}_codigo'] != 0:
+                    self.newResponsibles.loc[index,'codigo'] = int(self.ClickSign.loc[index, f'{radical}_codigo'])
+                    self.newResponsibles.loc[index,'nome'] = self.ClickSign.loc[index, f'{radical}_nome']
+
+                printProgressBar(index+1, len(self.ClickSign), prefix='Progresso atual:',
+                                    suffix='Completo', length=50)
+
+            # Responsável Financeiro, Responsável 1 e (talvez) Responsável 2
+            # print(f"\nBuscando os códigos dos responsáveis no campo {radical}...")
+            # self.ClickSign[f'{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='responsaveis', radical = radical) if (x[f'{radical}_nome'] != '') else 0, axis = 1)
+            # self.getDataResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
+            # print(f"Incluindo responsáveis no campo {radical}...")
+            # inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'responsaveis'), axis = 1)
+            # self.ClickSign[f'{radical}_codigo'], self.ClickSign[f'{radical}_procedimento'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
             
 
-            print(f"\nBuscando relação entre responsável do campo {radical} e aluno...")
-            self.ClickSign[f'aluno_{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos-responsaveis', radical = radical) if (x[f'{radical}_codigo'] != 0) else 0, axis = 1)
-            self.getDataStudentResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
-            print(f"\nInserindo relação entre responsável do campo {radical} e aluno...")
-            inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'alunos-responsaveis'), axis = 1)
-            self.ClickSign[f'aluno_{radical}_codigo'], self.ClickSign[f'aluno_{radical}_procedimento'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
+            # print(f"\nBuscando relação entre responsável do campo {radical} e aluno...")
+            # self.ClickSign[f'aluno_{radical}_codigo'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos-responsaveis', radical = radical) if (x[f'{radical}_codigo'] != 0) else 0, axis = 1)
+            # self.getDataStudentResponsibleForInclusion(data = self.ClickSign, radical=f'{radical}')
+            # print(f"\nInserindo relação entre responsável do campo {radical} e aluno...")
+            # inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x, target= 'alunos-responsaveis'), axis = 1)
+            # self.ClickSign[f'aluno_{radical}_codigo'], self.ClickSign[f'aluno_{radical}_procedimento'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
         self.saveBackupResults()
 
 
@@ -263,77 +326,97 @@ class InclusionManager(object):
     
         
               
-    def getDataStudentResponsibleForInclusion(self, data, radical = 'resp_fin  c'):
+    def getDataStudentResponsibleForInclusion(self,index, data, radical = 'resp_fin  c'):
         try:
-            data['codigoAlunoResponsavel'] = data[f'aluno_{radical}_codigo'] 
+            data.loc[index,'codigoAlunoResponsavel'] = data[f'aluno_{radical}_codigo'] 
         except:
-            data['codigoAlunoResponsavel'] = ""
+            data.loc[index,'codigoAlunoResponsavel'] = ""
 
-    def getDataResponsibleForInclusion(self, data, radical = 'resp_fin  c'):
+    def setNewDataColumnsForResponsibles(self):
+        self.ClickSign['codigoResponsavel'] = ""
+        self.ClickSign['nomeResponsavel'] = ""
+        self.ClickSign['emailResponsavel'] = ""
+        self.ClickSign['cpfResponsavel'] = ""
+        self.ClickSign['celularResponsavel'] = ""
+        self.ClickSign['sexoResponsavel'] = ""
+        self.ClickSign['dataNascimentoResponsavel'] = ""
+        self.ClickSign['estadoCivilResponsavel'] = ""
+        self.ClickSign['nacionalidadeResponsavel'] = ""
+        self.ClickSign['profissaoResponsavel'] = ""
+        self.ClickSign['identidadeResponsavel'] = ""
+        self.ClickSign['telefoneResponsavel'] = ""
+        self.ClickSign['cepResponsavel'] = ""
+        self.ClickSign['logradouroResponsavel'] = ""
+        self.ClickSign['numlogradouroResponsavel'] = ""
+        self.ClickSign['complementoResponsavel'] = ""
+        self.ClickSign['codigoAlunoResponsavel'] = ""
+
+
+    def getDataResponsibleForInclusion(self, index, data, radical = 'resp_finc'):
         try:
-            data['codigoResponsavel'] = data[f'{radical}_codigo'] 
+            self.ClickSign.loc[index,'codigoResponsavel'] = data[f'{radical}_codigo']
         except:
-            data['codigoResponsavel'] = ""
+            self.ClickSign.loc[index,'codigoResponsavel'] = ""
         try:
-            data['nomeResponsavel'] = data[f'{radical}_nome']
+            self.ClickSign.loc[index, 'nomeResponsavel'] = data[f'{radical}_nome']
         except:
-            data['nomeResponsavel'] = ""
+            self.ClickSign.loc[index, 'nomeResponsavel'] = ""
         try:
-            data['emailResponsavel'] = data[f'{radical}_email']
+            self.ClickSign.loc[index, 'emailResponsavel'] = data[f'{radical}_email']
         except:
-            data['emailResponsavel'] = ""
+            self.ClickSign.loc[index, 'emailResponsavel'] = ""
         try:
-            data['cpfResponsavel'] = data[f'{radical}_cpf']
+            self.ClickSign.loc[index, 'cpfResponsavel'] = data[f'{radical}_cpf']
         except:
-            data['cpfResponsavel'] = ""
+            self.ClickSign.loc[index, 'cpfResponsavel'] = ""
         try:
-            data['celularResponsavel'] = data[f'{radical}_tel_celular']
+            self.ClickSign.loc[index, 'celularResponsavel'] = data[f'{radical}_tel_celular']
         except:
-            data['celularResponsavel'] = ""
+            self.ClickSign.loc[index, 'celularResponsavel'] = ""
         try:
-            data['sexoResponsavel'] = data[f'{radical}_sexo']
+            self.ClickSign.loc[index, 'sexoResponsavel'] = data[f'{radical}_sexo']
         except:
-            data['sexoResponsavel'] = ""
+            self.ClickSign.loc[index, 'sexoResponsavel'] = ""
         try:
-            data['dataNascimentoResponsavel'] = data[f'{radical}_dt_nascimento']
+            self.ClickSign.loc[index, 'dataNascimentoResponsavel'] = data[f'{radical}_dt_nascimento']
         except:
-            data['dataNascimentoResponsavel'] = ""
+            self.ClickSign.loc[index, 'dataNascimentoResponsavel'] = ""
         try:
-            data['estadoCivilResponsavel'] = data[f'{radical}_estadoCivil']
+            self.ClickSign.loc[index, 'estadoCivilResponsavel'] = data[f'{radical}_estadoCivil']
         except:
-            data['estadoCivilResponsavel'] = ""
+            self.ClickSign.loc[index, 'estadoCivilResponsavel'] = ""
         try:
-            data['nacionalidadeResponsavel'] = data[f'{radical}_nacionalidade']
+            self.ClickSign.loc[index, 'nacionalidadeResponsavel'] = data[f'{radical}_nacionalidade']
         except:
-            data['nacionalidadeResponsavel'] = ""
+            self.ClickSign.loc[index, 'nacionalidadeResponsavel'] = ""
         try:
-            data['profissaoResponsavel'] = data[f'{radical}_profissao']
+            self.ClickSign.loc[index, 'profissaoResponsavel'] = data[f'{radical}_profissao']
         except:
-            data['profissaoResponsavel'] = ""
+            self.ClickSign.loc[index, 'profissaoResponsavel'] = ""
         try:
-            data['identidadeResponsavel'] = data[f'{radical}_rg']
+            self.ClickSign.loc[index, 'identidadeResponsavel'] = data[f'{radical}_rg']
         except:
-            data['identidadeResponsavel'] = ""
+            self.ClickSign.loc[index, 'identidadeResponsavel'] = ""
         try:
-            data['telefoneResponsavel'] = data[f'{radical}_tel_residencial']
+            self.ClickSign.loc[index, 'telefoneResponsavel'] = data[f'{radical}_tel_residencial']
         except:
-            data['telefoneResponsavel'] = ""
+            self.ClickSign.loc[index, 'telefoneResponsavel'] = ""
         try:
-            data['cepResponsavel'] = data[f'{radical}_cep']
+            self.ClickSign.loc[index, 'cepResponsavel'] = data[f'{radical}_cep']
         except:
-            data['cepResponsavel'] = ""
+            self.ClickSign.loc[index, 'cepResponsavel'] = ""
         try:
-            data['logradouroResponsavel'] = data[f'{radical}_logradouro']
+            self.ClickSign.loc[index, 'logradouroResponsavel'] = data[f'{radical}_logradouro']
         except:
-            data['logradouroResponsavel'] = ""
+            self.ClickSign.loc[index, 'logradouroResponsavel'] = ""
         try:
-            data['numlogradouroResponsavel'] = data[f'{radical}_numero']
+            self.ClickSign.loc[index, 'numlogradouroResponsavel'] = data[f'{radical}_numero']
         except:
-            data['numlogradouroResponsavel'] = ""
+            self.ClickSign.loc[index, 'numlogradouroResponsavel'] = ""
         try:
-            data['complementoResponsavel'] = data[f'{radical}_complemento']
+            self.ClickSign.loc[index, 'complementoResponsavel'] = data[f'{radical}_complemento']
         except:
-            data['complementoResponsavel'] = ""
+            self.ClickSign.loc[index, 'complementoResponsavel'] = ""
             
 
 
@@ -342,11 +425,11 @@ class You(object):
     def __init__(self):
         import time
         print("Iniciando inclusões no sistema WPensar", end="",flush=True)
-        for i in range(2):
-            time.sleep(1)
-            print('.',end="", flush=True)
-        print('.')
-        time.sleep(1)
+        # for i in range(2):
+        #     time.sleep(1)
+        #     print('.',end="", flush=True)
+        # print('.')
+        # time.sleep(1)
 
     def askInclusionManager(self):
         # print("You:: Let's contact the event manager\n\n")
@@ -355,5 +438,10 @@ class You(object):
 
     def __del__(self):
         print("Processo finalizado!!!")
+    
+    def deleteNanResponsible(self):
+        em = DeletionManager()
+        em.doDelete()
+
 
 
