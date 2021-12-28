@@ -118,7 +118,10 @@ class dataResponsavel(object):
         self.celular = SetValueToSendoToApi(data[f'{radical}_tel_celular']) if f'{radical}_tel_celular' in data else ""
         # self.sexo = data['sexoResponsavel if = data['se != "" else ""']
         if f'{radical}_dt_nascimento' in data:
-            self.datanascimento = datetime.datetime.strptime(data[f'{radical}_dt_nascimento'], "%d-%m-%Y").strftime("%Y-%m-%d") if isAValidData(data[f'{radical}_dt_nascimento'])  else ""
+            try:
+                self.datanascimento = datetime.datetime.strptime(data[f'{radical}_dt_nascimento'], "%d-%m-%Y").strftime("%Y-%m-%d") if isAValidData(data[f'{radical}_dt_nascimento'])  else ""
+            except:
+                self.datanascimento =""
         else:
             self.datanascimento = ""
         # self.estadocivil = data['estadoCivilResponsavel if = data['es != "" else ""']

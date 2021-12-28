@@ -191,7 +191,7 @@ class InclusionManager(object):
                 o dado já existe na plataforma
                 retornaremos seu id
                 """
-                print('1')
+                # print('1')
                 try:
                     return [self.sendDataToWPensar(target=target, data = data, radical = radical)[f'{returnData}'], "Dados atualizados."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
                 except:
@@ -201,7 +201,7 @@ class InclusionManager(object):
                 A informação é nova e ainda não foi inserido na plataforma
                 Após a inclusão, retornaremos seu id
                 '''
-                print('2')
+                # print('2')
                 response = self.sendDataToWPensar(target=target, data = data, radical = radical)
                 try: 
                     return [response[f'{returnData}'], "Dados inseridos."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]

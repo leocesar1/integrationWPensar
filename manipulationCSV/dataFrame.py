@@ -74,9 +74,7 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         
 
         listOfPossibilitiesOldResponsibles = (
-            
             'Aluno da Escola'
-              
         )
 
         listOfPossibilitiesNewResponsibles = (
@@ -86,14 +84,15 @@ class DataBaseClickSign(metaclass = MetaSingleton):
             'Aluno Novo (dependente de associado ativo)',
             ' Novo aluno (dependente de associado inativo)'
         )
-
-        if responsibleSituation in listOfPossibilitiesNewResponsibles:
-            return True
-        elif responsibleSituation in listOfPossibilitiesOldResponsibles:
-            return False
-        else:
+        try:
+            if responsibleSituation in listOfPossibilitiesNewResponsibles:
+                return True
+            elif responsibleSituation in listOfPossibilitiesOldResponsibles:
+                return False
+            else:
+                return None
+        except:
             return None
-        
     def isEmpty(self, text):
         # verify if a field is a empty field
         return True if not text else False
