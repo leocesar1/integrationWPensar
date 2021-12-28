@@ -98,9 +98,12 @@ class InclusionManager(object):
             pass
         elif target == 'responsaveis':
             codResponsavel = False
-            for row in self.newResponsibles[['nome', 'codigo']].to_numpy():
-                if self.stringComparation(data[f'{radical}_nome'], row[0]):
-                    codResponsavel = row[1]
+            print(self.newResponsibles)
+            print(data[f'{radical}_nome'])
+            if data[f'{radical}_nome'] in self.newResponsibles:
+                codResponsavel = self.newResponsibles[data[f'{radical}_nome']]
+                print(codResponsavel)
+            
             if type(codResponsavel) is not bool:
                 return codResponsavel
             else:
@@ -131,7 +134,7 @@ class InclusionManager(object):
                 return 0
         elif target == 'alunos-responsaveis':
             codAluno = data['matriculaWPensar']
-            codResponsavel = data[f'codigoResponsavel']
+            codResponsavel = data[f'{radical}_codigo']
             codRelacao = False
             for row in self.WPensar.alunosResponsaveis[["id", "mataluno", "codresponsavel"]].to_numpy():
                 if codAluno == row[1] and codResponsavel == row[2]:
@@ -153,7 +156,7 @@ class InclusionManager(object):
             else:
                 return 'Erro'
 
-    def doInclude(self, data = None, target = 'alunos'):
+    def doInclude(self, data = None, target = 'alunos', radical = ''):
         """
         This function returns pk number after consult or inclusion data at WPensar
         """
@@ -166,13 +169,17 @@ class InclusionManager(object):
                 isExistWPensar = data['matriculaWPensar']
                 returnData = 'matricula'
             elif target == 'responsaveis':
-                dontInsert = True if data['nomeResponsavel'] == 'Primeiro Associado - Contratante' or data['nomeResponsavel'] == 'Segundo Associado - Contratante' else False
+                if data[f'{radical}_nome'] == 'Primeiro Associado - Contratante':
+                    radical = 'resp1'
+                elif data[f'{radical}_nome'] == 'Segundo Associado - Contratante':
+                    radical = 'resp2'
+                dontInsert = True if data[f'{radical}_nome'] == 'Primeiro Associado - Contratante' or data[f'{radical}_nome'] == 'Segundo Associado - Contratante' else False
                 isNewData = data['novo_responsavel']
-                isExistWPensar = data['codigoResponsavel']
+                isExistWPensar = data[f'{radical}_codigo']
                 returnData = 'codigo'
             elif target == 'alunos-responsaveis':
                 isNewData = data['novo_responsavel']
-                isExistWPensar = data['codigoAlunoResponsavel']
+                isExistWPensar = data[f'aluno_{radical}_codigo']
                 returnData = 'id'
             else:
                 return None
@@ -184,16 +191,18 @@ class InclusionManager(object):
                 o dado já existe na plataforma
                 retornaremos seu id
                 """
+                print('1')
                 try:
-                    return [self.sendDataToWPensar(target=target, data = data)[f'{returnData}'], "Dados atualizados."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
+                    return [self.sendDataToWPensar(target=target, data = data, radical = radical)[f'{returnData}'], "Dados atualizados."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
                 except:
-                    return [0, "Erro"]
+                    return [0, "Erro 1"]
             elif (isNewData and isExistWPensar == 0): #True and False
                 '''
                 A informação é nova e ainda não foi inserido na plataforma
                 Após a inclusão, retornaremos seu id
                 '''
-                response = self.sendDataToWPensar(target=target, data = data)
+                print('2')
+                response = self.sendDataToWPensar(target=target, data = data, radical = radical)
                 try: 
                     return [response[f'{returnData}'], "Dados inseridos."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
                 except:
@@ -204,7 +213,7 @@ class InclusionManager(object):
                 A informação já existe na plataforma
                 retornaremos seu id
                 """
-                response = self.sendDataToWPensar(target=target, data = data)
+                response = self.sendDataToWPensar(target=target, data = data, radical = radical)
                 try:
                     return [response[f'{returnData}'], "Dados atualizados."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
                 except:
@@ -215,24 +224,25 @@ class InclusionManager(object):
                 """
                 return [0, "Incluir manualmente."] if not dontInsert else [0, f"Será inserido como {data['nomeResponsavel']}"]
             else:
-                return [0, "Erro"]
+                return [0, "Erro 2"]
         else:
             return [0, "Documento não finalizado ou é teste"]
 
-    def sendDataToWPensar(self, target, data):        
+    def sendDataToWPensar(self, target, data, radical = ''):        
         pk = 'new'
         if target == 'alunos':
             dataTreated = dataAluno(data.to_dict())
             if data['matriculaWPensar'] != 0:
                 pk = data['matriculaWPensar']
         elif target == 'responsaveis':
-            dataTreated = dataResponsavel(data.to_dict())
-            if data['codigoResponsavel'] != 0:
-                pk = data['codigoResponsavel']
+            dataTreated = dataResponsavel(data.to_dict(), radical = radical)
+            if data[f'{radical}_codigo'] != 0:
+                pk = data[f'{radical}_codigo']
+            print(data[f'{radical}_codigo'])
         elif target == 'alunos-responsaveis':
-            dataTreated = dataAlunoResponsavel(data.to_dict())
-            if data['codigoAlunoResponsavel'] != 0:
-                pk = data['codigoAlunoResponsavel']
+            dataTreated = dataAlunoResponsavel(data.to_dict(), radical = radical)
+            if data[f'aluno_{radical}_codigo'] != 0:
+                pk = data[f'aluno_{radical}_codigo']
         elif target == 'matriculas':
             dataTreated = dataMatricula(data.to_dict())
         else:
@@ -247,16 +257,18 @@ class InclusionManager(object):
         """
         print("\n\nIniciando inclusão de alunos")
         print("Buscando números de matrícula na WPensar...\n")
-        self.ClickSign['matriculaWPensar'] = self.ClickSign.progress_apply(lambda x: self.searchInWPensar(x, target='alunos'), axis = 1)
-        # print("\n\nConfirmando qual o procedimento a ser adotado...\n")
-        # inclusion = self.ClickSign.progress_apply(lambda x: self.doInclude(data = x), axis = 1)
-        # self.ClickSign['matriculaWPensar'], self.ClickSign['inclusaoAluno'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
+        self.ClickSign['matriculaWPensar'] = self.ClickSign.progress_apply(
+            lambda x: self.searchInWPensar(x, target='alunos'), axis = 1)
+        print("\n\nConfirmando qual o procedimento a ser adotado...\n")
+        inclusion = self.ClickSign.progress_apply(
+            lambda x: self.doInclude(data = x), axis = 1)
+        self.ClickSign['matriculaWPensar'], self.ClickSign['inclusaoAluno'] = inclusion.progress_apply(lambda x: x[0]), inclusion.progress_apply(lambda x: x[1]) 
 
         """
         Matricular alunos
         """
-        # print("\n\nInserindo as matrículas")
-        # self.ClickSign['matriculaTurma'] = self.ClickSign.progress_apply(lambda x: self.doIncludeMatricula(x), axis = 1)
+        print("\n\nInserindo as matrículas")
+        self.ClickSign['matriculaTurma'] = self.ClickSign.progress_apply(lambda x: self.doIncludeMatricula(x), axis = 1)
         
 
         """
@@ -267,36 +279,46 @@ class InclusionManager(object):
         list_responsibles.append('resp_finc') if 'resp_finc_nome' in self.ClickSign.columns else ''
         list_responsibles.append('resp2') if 'resp2_nome' in self.ClickSign.columns else ''
 
-        self.newResponsibles = pd.DataFrame(columns=['nome', 'codigo'])
-        self.setNewDataColumnsForResponsibles()
+        self.newResponsibles = {}
+        # self.setNewDataColumnsForResponsibles()
         print("\n\nIniciando inclusão de responsáveis...")
         
         for radical in list_responsibles:
             self.ClickSign[f'{radical}_codigo'], self.ClickSign[f'{radical}_procedimento'] = 0, 0
             self.ClickSign[f'aluno_{radical}_codigo'], self.ClickSign[f'aluno_{radical}_procedimento'] = 0, 0
             # Responsável Financeiro, Responsável 1 e (talvez) Responsável 2
-            printProgressBar(0, len(self.ClickSign), prefix='Progresso atual:',
+            printProgressBar(0, len(self.ClickSign), prefix=f'Inserindo {radical}:',
                                 suffix='Completo', length=50)
             for index, row in self.ClickSign.iterrows():
                 # 1- Verificar na WPensar
-                self.ClickSign.loc[index, f'{radical}_codigo'] = self.searchInWPensar(row, target='responsaveis', radical = radical) if (row[f'{radical}_nome'] != '') else 0
-                # 2- Verificar se acabou de ser concluída
-                if self.ClickSign.loc[index, f'{radical}_codigo'] == 0:
-                    self.ClickSign.loc[index, f'{radical}_codigo'] = self.searchInAtLastInclusions(row, target='responsaveis', radical = radical) if (row[f'{radical}_nome'] != '') else 0
+                codigo = self.searchInWPensar(row, target='responsaveis', radical = radical) if (row[f'{radical}_nome'] != '') else 0
+                if codigo != 0:
+                    pass
+                else:
+                # 2- Verificar se já foi incluída
+                    codigo = self.searchInAtLastInclusions(row, target='responsaveis', radical = radical) if (row[f'{radical}_nome'] != '' and row[f'{radical}_nome']!= 'Primeiro Associado - Contratante' and row[f'{radical}_nome']!= 'Segundo Associado - Contratante') else 0
+                # 3 - Define a variável
+                self.ClickSign.loc[index, f'{radical}_codigo'] = codigo
+                row[f'{radical}_codigo'] = codigo
+                
+                print(self.ClickSign.loc[index, f'{radical}_codigo'])
+                print(row[f'{radical}_codigo'])
 
                 self.ClickSign.loc[index, f'aluno_{radical}_codigo'] = self.searchInWPensar(row, target='alunos-responsaveis', radical = radical) if (row[f'{radical}_codigo'] != 0) else 0
-
+                row[f'aluno_{radical}_codigo'] = self.searchInWPensar(row, target='alunos-responsaveis', radical = radical) if (row[f'{radical}_codigo'] != 0) else 0
                 # 3- Inserir e retornar inclusão
-                self.getDataResponsibleForInclusion(index, data = row, radical=f'{radical}')
-                self.getDataStudentResponsibleForInclusion(index, data = self.ClickSign, radical=f'{radical}')
-                # self.ClickSign.loc[index,f'{radical}_codigo'], self.ClickSign.loc[index,f'{radical}_procedimento'] = self.doInclude(data = row, target= 'responsaveis')
-                # self.ClickSign.loc[index, f'aluno_{radical}_codigo'], self.ClickSign.loc[index, f'aluno_{radical}_procedimento'] = self.doInclude(data = row, target= 'alunos-responsaveis')  
-                
-                if self.ClickSign.loc[index, f'{radical}_codigo'] != 0:
-                    self.newResponsibles.loc[index,'codigo'] = int(self.ClickSign.loc[index, f'{radical}_codigo'])
-                    self.newResponsibles.loc[index,'nome'] = self.ClickSign.loc[index, f'{radical}_nome']
+                # self.getDataResponsibleForInclusion(index, data = row, radical=f'{radical}')
+                # self.getDataStudentResponsibleForInclusion(index, data = self.ClickSign, radical=f'{radical}')
 
-                printProgressBar(index+1, len(self.ClickSign), prefix='Progresso atual:',
+                self.ClickSign.loc[index,f'{radical}_codigo'], self.ClickSign.loc[index,f'{radical}_procedimento'] = self.doInclude(data = row, target= 'responsaveis', radical = radical)
+                
+                self.ClickSign.loc[index, f'aluno_{radical}_codigo'], self.ClickSign.loc[index, f'aluno_{radical}_procedimento'] = self.doInclude(data = row, target= 'alunos-responsaveis', radical = radical)  
+                
+
+                if self.ClickSign.loc[index, f'{radical}_codigo'] != 0:
+                    self.newResponsibles[self.ClickSign.loc[index, f'{radical}_nome']] = int(self.ClickSign.loc[index, f'{radical}_codigo'])
+                    
+                printProgressBar(index+1, len(self.ClickSign), prefix=f'Inserindo {radical}:',
                                     suffix='Completo', length=50)
 
             # Responsável Financeiro, Responsável 1 e (talvez) Responsável 2
@@ -326,30 +348,30 @@ class InclusionManager(object):
     
         
               
-    def getDataStudentResponsibleForInclusion(self,index, data, radical = 'resp_fin  c'):
-        try:
-            data.loc[index,'codigoAlunoResponsavel'] = data[f'aluno_{radical}_codigo'] 
-        except:
-            data.loc[index,'codigoAlunoResponsavel'] = ""
+    # def getDataStudentResponsibleForInclusion(self,index, data, radical = 'resp_fin  c'):
+    #     try:
+    #         data.loc[index,'codigoAlunoResponsavel'] = data[f'aluno_{radical}_codigo'] 
+    #     except:
+    #         data.loc[index,'codigoAlunoResponsavel'] = ""
 
-    def setNewDataColumnsForResponsibles(self):
-        self.ClickSign['codigoResponsavel'] = ""
-        self.ClickSign['nomeResponsavel'] = ""
-        self.ClickSign['emailResponsavel'] = ""
-        self.ClickSign['cpfResponsavel'] = ""
-        self.ClickSign['celularResponsavel'] = ""
-        self.ClickSign['sexoResponsavel'] = ""
-        self.ClickSign['dataNascimentoResponsavel'] = ""
-        self.ClickSign['estadoCivilResponsavel'] = ""
-        self.ClickSign['nacionalidadeResponsavel'] = ""
-        self.ClickSign['profissaoResponsavel'] = ""
-        self.ClickSign['identidadeResponsavel'] = ""
-        self.ClickSign['telefoneResponsavel'] = ""
-        self.ClickSign['cepResponsavel'] = ""
-        self.ClickSign['logradouroResponsavel'] = ""
-        self.ClickSign['numlogradouroResponsavel'] = ""
-        self.ClickSign['complementoResponsavel'] = ""
-        self.ClickSign['codigoAlunoResponsavel'] = ""
+    # def setNewDataColumnsForResponsibles(self):
+        # self.ClickSign['codigoResponsavel'] = ""
+        # self.ClickSign['nomeResponsavel'] = ""
+        # self.ClickSign['emailResponsavel'] = ""
+        # self.ClickSign['cpfResponsavel'] = ""
+        # self.ClickSign['celularResponsavel'] = ""
+        # self.ClickSign['sexoResponsavel'] = ""
+        # self.ClickSign['dataNascimentoResponsavel'] = ""
+        # self.ClickSign['estadoCivilResponsavel'] = ""
+        # self.ClickSign['nacionalidadeResponsavel'] = ""
+        # self.ClickSign['profissaoResponsavel'] = ""
+        # self.ClickSign['identidadeResponsavel'] = ""
+        # self.ClickSign['telefoneResponsavel'] = ""
+        # self.ClickSign['cepResponsavel'] = ""
+        # self.ClickSign['logradouroResponsavel'] = ""
+        # self.ClickSign['numlogradouroResponsavel'] = ""
+        # self.ClickSign['complementoResponsavel'] = ""
+        # self.ClickSign['codigoAlunoResponsavel'] = ""
 
 
     def getDataResponsibleForInclusion(self, index, data, radical = 'resp_finc'):

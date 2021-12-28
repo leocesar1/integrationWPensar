@@ -198,7 +198,10 @@ class DataBaseClickSign(metaclass = MetaSingleton):
             try:
                 self.dataframeTreated['resp_finc_nome'] = dataframe['Formulário 1 Responsável Financeiro - Caso seja diferente do Primeiro Associado assinalar "outro", informar o nome completo no campo ao lado e anexar os documentos na seção "Documentos - Responsável Financeiro"']
             except:
-                self.dataframeTreated['resp_finc_nome'] = dataframe['Formulário 1 Responsável Financeiro - Caso seja diferente do Primeiro e Segundo Associado assinalar "outro", informar o nome completo no campo ao lado e anexar os documentos na seção "Documentos - Responsável Financeiro"']
+                try:
+                    self.dataframeTreated['resp_finc_nome'] = dataframe['Formulário 1 Responsável Financeiro - Caso seja diferente do Primeiro e Segundo Associado assinalar "outro", informar o nome completo no campo ao lado e anexar os documentos na seção "Documentos - Responsável Financeiro"']
+                except:
+                    pass
         finally:
             try:
                 self.dataframeTreated['resp_finc_nacionalidade'] = dataframe['Formulário 1 Nacionalidade do Responsável Financeiro']

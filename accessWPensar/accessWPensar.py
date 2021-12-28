@@ -8,6 +8,15 @@ from math import ceil
 import datetime
 # from time import *
 
+def isAValidData(value):
+    if value is None or value == NaN or value == "" or value == 0:
+        return False
+    else:
+        return True
+
+def SetValueToSendoToApi(value):
+    return value if isAValidData(value) else ""
+
 class dataMatricula(object):
     """
     This class creates a partner to include students data
@@ -83,10 +92,10 @@ class dataAlunoResponsavel(object):
     """
     This class creates a partner to include students data
     """
-    def __init__(self, data):
-        self.pk = data['codigoAlunoResponsavel'] if data['codigoAlunoResponsavel'] != 0 else False 
+    def __init__(self, data, radical =""):
+        self.pk = data[f'aluno_{radical}_codigo'] if data[f'aluno_{radical}_codigo'] != 0 else False 
         self.mataluno = data['matriculaWPensar']
-        self.codresponsavel =data['codigoResponsavel']
+        self.codresponsavel =data[f'{radical}_codigo']
 
     def toJson(self):
         response = {
@@ -101,23 +110,26 @@ class dataResponsavel(object):
     """
     This class creates a partner to include responsible data
     """
-    def __init__(self, data):
-        self.codigo = data['codigoResponsavel'] if data['codigoResponsavel'] != 0 else "" 
-        self.nome = data['nomeResponsavel'] if data['nomeResponsavel'] != "" else ""
-        self.email = data['emailResponsavel'] if data['emailResponsavel'] != "" else ""
-        self.cpf = data['cpfResponsavel'] if data['cpfResponsavel'] != "" else ""
-        self.celular = data['celularResponsavel'] if data['celularResponsavel'] != "" else ""
+    def __init__(self, data, radical = ''):
+        self.codigo = SetValueToSendoToApi(data[f'{radical}_codigo']) if f'{radical}_codigo' in data else "" 
+        self.nome = SetValueToSendoToApi(data[f'{radical}_nome']) if f'{radical}_nome' in data else ""
+        self.email = SetValueToSendoToApi(data[f'{radical}_email']) if f'{radical}_email' in data else ""
+        self.cpf = SetValueToSendoToApi(data[f'{radical}_cpf']) if f'{radical}_cpf' in data else ""
+        self.celular = SetValueToSendoToApi(data[f'{radical}_tel_celular']) if f'{radical}_tel_celular' in data else ""
         # self.sexo = data['sexoResponsavel if = data['se != "" else ""']
-        self.datanascimento = datetime.datetime.strptime(data['dataNascimentoResponsavel'], "%d-%m-%Y").strftime("%Y-%m-%d") if data['dataNascimentoResponsavel'] != "" else ""
+        if f'{radical}_dt_nascimento' in data:
+            self.datanascimento = datetime.datetime.strptime(data[f'{radical}_dt_nascimento'], "%d-%m-%Y").strftime("%Y-%m-%d") if isAValidData(data[f'{radical}_dt_nascimento'])  else ""
+        else:
+            self.datanascimento = ""
         # self.estadocivil = data['estadoCivilResponsavel if = data['es != "" else ""']
-        self.nacionalidade = data['nacionalidadeResponsavel'] if data['nacionalidadeResponsavel'] != "" else ""
-        self.profissao = data['profissaoResponsavel'] if data['profissaoResponsavel'] != "" else ""
-        self.identidade = data['identidadeResponsavel'] if data['identidadeResponsavel'] != "" else ""
-        self.telefone = data['telefoneResponsavel'] if data['telefoneResponsavel'] != "" else ""
-        self.cep = data['cepResponsavel'] if data['cepResponsavel'] != "" else ""
-        self.logradouro = data['logradouroResponsavel'] if data['logradouroResponsavel'] != "" else ""
-        self.numlogradouro = data['numlogradouroResponsavel'] if data['numlogradouroResponsavel'] != "" else ""
-        self.complemento = data['complementoResponsavel'] if data['complementoResponsavel'] != "" else ""
+        self.nacionalidade = SetValueToSendoToApi(data[f'{radical}_nacionalidade']) if f'{radical}_nacionalidade' in data else ""
+        self.profissao = SetValueToSendoToApi(data[f'{radical}_profissao']) if f'{radical}_profissao' in data else ""
+        self.identidade = SetValueToSendoToApi(data[f'{radical}_rg']) if f'{radical}_rg' in data else ""
+        self.telefone = SetValueToSendoToApi(data[f'{radical}_tel_residencial']) if f'{radical}_tel_residencial' in data else ""
+        self.cep = SetValueToSendoToApi(data[f'{radical}_cep']) if f'{radical}_cep' in data else ""
+        self.logradouro = SetValueToSendoToApi(data[f'{radical}_logradouro']) if f'{radical}_logradouro' in data else ""
+        self.numlogradouro = SetValueToSendoToApi(data[f'{radical}_numero']) if f'{radical}_numero' in data else ""
+        self.complemento = SetValueToSendoToApi(data[f'{radical}_complemento']) if f'{radical}_complemento' in data else ""
         
     def toJson(self):
         response = {
@@ -142,7 +154,7 @@ class dataResponsavel(object):
         response['complemento'] = self.complemento
         # response['escolaridadeformacao'] = self.escolaridadeformacao
 
-        response = {k: v for k, v in response.items() if v != '' and v != None and v!= NaN}
+        response = {k: v for k, v in response.items() if isAValidData(v)}
         
         return response
 
