@@ -24,7 +24,7 @@ class DeletionManager(object):
 class InclusionManager(object):
     def __init__(self):
         print("Iniciando processo de inclusão dos alunos na plataforma WPensar \n")
-        self.getDataframeStatus()
+        # self.getDataframeStatus()
         self.getTables()
 
     def getDataframeStatus(self):
@@ -66,7 +66,7 @@ class InclusionManager(object):
         nameFile = self.choiceFile()
         if nameFile == False:
             exit()
-        filename = nameFile#os.path.join(os.path.dirname('__file__'), 'planilha_clicksign', filename)
+        filename = nameFile
         self.dataBaseClickSign = DataBaseClickSign(filename)
         self.ClickSign = self.dataBaseClickSign.dataframeTreated
 
@@ -162,7 +162,7 @@ class InclusionManager(object):
         """
         data = self.ClickSign if data is None else data
         dontInsert = False
-        if data['status'] == "Finalizado" and not data['teste']:
+        if (data['finalizado'] or data['finalizado_manualmente']) and not data['teste']:
             # Busca a informação na tabela da clickSign
             if target == 'alunos':
                 isNewData = data['novo_aluno']
@@ -301,8 +301,8 @@ class InclusionManager(object):
                 self.ClickSign.loc[index, f'{radical}_codigo'] = codigo
                 row[f'{radical}_codigo'] = codigo
                 
-                print(self.ClickSign.loc[index, f'{radical}_codigo'])
-                print(row[f'{radical}_codigo'])
+                # print(self.ClickSign.loc[index, f'{radical}_codigo'])
+                # print(row[f'{radical}_codigo'])
 
                 self.ClickSign.loc[index, f'aluno_{radical}_codigo'] = self.searchInWPensar(row, target='alunos-responsaveis', radical = radical) if (row[f'{radical}_codigo'] != 0) else 0
                 row[f'aluno_{radical}_codigo'] = self.searchInWPensar(row, target='alunos-responsaveis', radical = radical) if (row[f'{radical}_codigo'] != 0) else 0

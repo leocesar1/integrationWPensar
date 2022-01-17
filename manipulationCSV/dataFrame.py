@@ -9,21 +9,36 @@ class DataBaseClickSign(metaclass = MetaSingleton):
     # get all data to include in WPensar
     def __init__(self, filename):
         self.filename = filename
+        self.dataframeOriginal = self.getDataFromFile(filename, 'planilha_clicksign')
+        self.getListOfExceptionInclusions()
+        self.treatDataFrame()
+
+    def getDataFromFile(self, filename, local):
+        print(local, filename)
         import os     
-        filename = os.path.join(os.path.dirname('__file__'), 'planilha_clicksign', filename)
-        # self.dataframeManualInsertions = pd.read_excel(os.path.join(os.path.dirname('__file__'), 'planilha_clicksign', 'Relatório finalizado_ok.xlsx'))
+        filename = os.path.join(os.path.dirname('__file__'), local, filename)
         try:
             if filename.split('.')[-1] == 'csv':
-                self.dataframeOriginal = pd.read_csv(filename)
+                return pd.read_csv(filename)
             elif filename.split('.')[-1] == 'xlsx' or filename.split('.')[-1] == 'xls':
-                self.dataframeOriginal = pd.read_excel(filename)
+                return pd.read_excel(filename)
         except:
             print('Não foi possível carregar a planilha indicada. Verifique os dados e tente novamente.')
-            self.dataframeTreated = None
-            # self.dataframeRenovations = pd.DataFrame({'A' : []})
-            # self.dataframeNewRegistrations = pd.DataFrame({'A' : []})
-        else:
-            self.treatDataFrame()
+            return None
+
+    def getListOfExceptionInclusions(self):
+        inclusionsForcedListFileAndNameColumns = {
+            'rel_excessoes_mat_ext.xlsx': 'Formulário 1 Nome completo do Aluno (a) :',
+            'rel_excessoes_renovacao.xlsx': 'Formulário 1 Nome do Aluno (a)',
+            'rel_excessoes_renovacao_viuvos.xlsx':'Formulário 1 Nome do Aluno (a)',
+            'rel_excessoes_externas_excepcionais.xlsx': 'Formulário 1 Nome completo do Aluno (a) :'
+            }
+        self.listNameCanceledStudentsForInclusions = []
+        for item, columnName  in inclusionsForcedListFileAndNameColumns.items():
+            forcedInclusionsTable = self.getDataFromFile(item, 'inclusionsOfCanceled')[columnName].to_list()
+            for name in forcedInclusionsTable:
+                self.listNameCanceledStudentsForInclusions.append(name)
+        
     
     def removeEmptyColumns(self):
         # print(len(self.dataframeOriginal.columns))
@@ -101,12 +116,17 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         # verify if a field is a empty field
         return True if text == "Finalizado" else False
 
+    def isManuallyFinished(self, text):
+        # verify if a field is a empty field
+        return True if text in self.listNameCanceledStudentsForInclusions else False
+
     def isTestStudent(self, text):
         # verify if is a teste
         # students name
         # return True if isn't a test
         listTestNames = [
             'Jéssica Nascimento Lacerda Domingos',
+            'Bernardo',
             'Teste ',
             'Testando ',
             'aaaaaaaaaaaaaaa',
@@ -127,28 +147,13 @@ class DataBaseClickSign(metaclass = MetaSingleton):
         
         return jf.levenshtein_distance(''.join(text1.split()), ''.join(text2.split()))
 
-    # def isFinishedManual(self, text ):
-    #     resultMin = 100
-        
-    #     try:
-    #         text = ''.join([i for i in text if not i.isdigit()])            
-    #         text.replace(".docx","").replace(".pdf","")
-    #         for row in self.dataframeManualInsertions[['Nome do documento']].to_numpy():
-    #             rowTreated = ''.join([i for i in row[0] if not i.isdigit()])            
-    #             rowTreated.replace(".docx","").replace(".pdf","")
-    #             resultNow = self.calculateSimilarity(text, rowTreated)
-    #             if resultNow < resultMin:
-    #                 resultMin = resultNow
-    #     except:
-    #         pass
-    #     print(text, resultMin)
-
     def setInclusionsSituations(self):
         # includes all        
         self.dataframeTreated['novo_aluno'] = self.dataframeTreated.apply(lambda x: self.isNewStudent(x['situacao']), axis = 1)
         self.dataframeTreated['novo_responsavel'] = self.dataframeTreated.apply(lambda x: self.isNewResponsible(x['situacao']), axis = 1)
         self.dataframeTreated['teste'] = self.dataframeTreated.apply(lambda x: self.isTestStudent(x['nomeAluno']), axis = 1)
         self.dataframeTreated['finalizado'] = self.dataframeTreated.apply(lambda x: self.isFinished(x['status']), axis = 1)
+        self.dataframeTreated['finalizado_manualmente'] = self.dataframeTreated.apply(lambda x: self.isManuallyFinished(x['nomeAluno']), axis = 1)
         # self.dataframeOriginal.apply(lambda x: self.isFinishedManual(x['Nome do documento']), axis = 1)
 
     def getDocumentsInformations(self, dataframe = None):
